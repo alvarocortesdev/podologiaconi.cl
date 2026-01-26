@@ -21,7 +21,7 @@ export default function Layout({ children }) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <Link to="/" className="text-2xl font-bold tracking-tighter text-primary">
+            <Link to="/" className="text-2xl font-display font-bold tracking-tight text-primary">
               Podología<span className="text-secondary">Coni</span>
             </Link>
 
