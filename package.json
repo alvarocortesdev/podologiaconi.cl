@@ -6,10 +6,7 @@
     "server"
   ],
   "scripts": {
-    "build": "cd server && npm install && npx prisma generate && cd ../client && npm install && npm run build",
-    "postinstall": "cd server && npm install && npx prisma generate"
-  },
-  "engines": {
-    "node": "18.x"
+    "build": "cd client && npm run build",
+    "postinstall": "cd server && npx prisma generate"
   }
 }
