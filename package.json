@@ -8,8 +8,5 @@
   "scripts": {
     "build": "npm run build --workspace=client",
     "postinstall": "npm run generate --workspace=server"
-  },
-  "engines": {
-    "node": "20.x"
   }
 }
