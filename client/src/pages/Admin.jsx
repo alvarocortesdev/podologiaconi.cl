@@ -21,7 +21,7 @@ export default function Admin() {
 
   const fetchServices = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/services');
+      const res = await fetch('/api/services');
       const data = await res.json();
       setServices(data);
     } catch (error) {
@@ -33,7 +33,7 @@ export default function Admin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/login', {
+      const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -70,8 +70,8 @@ export default function Admin() {
 
     const method = currentService ? 'PUT' : 'POST';
     const url = currentService 
-      ? `http://localhost:3000/api/services/${currentService.id}`
-      : 'http://localhost:3000/api/services';
+      ? `/api/services/${currentService.id}`
+      : '/api/services';
 
     try {
       const res = await fetch(url, {
@@ -98,7 +98,7 @@ export default function Admin() {
     if (!window.confirm("¿Seguro que deseas eliminar este servicio?")) return;
     
     try {
-      const res = await fetch(`http://localhost:3000/api/services/${id}`, {
+      const res = await fetch(`/api/services/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

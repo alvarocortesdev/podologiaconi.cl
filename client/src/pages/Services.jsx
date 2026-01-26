@@ -14,7 +14,7 @@ export default function Services() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/services')
+    fetch('/api/services')
       .then(res => res.json())
       .then(data => {
         setServices(data);
@@ -46,7 +46,7 @@ export default function Services() {
     e.preventDefault();
     setSending(true);
     try {
-      const response = await fetch('http://localhost:3000/api/quote', {
+      const response = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, services: selectedServices })
