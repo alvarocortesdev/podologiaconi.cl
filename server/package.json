@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "generate": "npx prisma generate"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +21,6 @@
     "resend": "^6.8.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11",
-    "prisma": "^5.10.0"
+    "nodemon": "^3.1.11"
   }
 }
