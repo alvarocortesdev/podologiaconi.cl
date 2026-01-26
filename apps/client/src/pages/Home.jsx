@@ -11,15 +11,18 @@ export default function Home() {
   ];
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="space-y-24 pb-24">
       {/* Hero Section */}
       <section className="relative bg-[#f4ede6] overflow-hidden">
-        <div className="absolute -top-24 right-0 h-80 w-80 rounded-full bg-secondary/20 blur-3xl"></div>
-        <div className="absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl"></div>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-24 lg:flex lg:items-center lg:gap-14">
+        <div className="absolute -top-24 right-0 h-96 w-96 rounded-full bg-secondary/20 blur-3xl"></div>
+        <div className="absolute -bottom-40 left-0 h-[28rem] w-[28rem] rounded-full bg-primary/10 blur-3xl"></div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-28 lg:flex lg:items-center lg:gap-14">
           {/* Text Content */}
           <div className="lg:w-1/2 text-center lg:text-left z-10">
-            <h1 className="text-4xl lg:text-6xl font-display font-bold text-primary mb-6 leading-tight">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-primary shadow-sm">
+              Atención clínica especializada
+            </div>
+            <h1 className="text-4xl lg:text-6xl font-display font-bold text-primary mt-6 mb-6 leading-tight">
               Salud y belleza <br />
               <span className="text-secondary">para tus pies</span>
             </h1>
@@ -40,11 +43,26 @@ export default function Home() {
                 Conocer más
               </a>
             </div>
+            <div className="mt-10 grid grid-cols-3 gap-4 text-left">
+              <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                <p className="text-2xl font-display font-semibold text-primary">+6</p>
+                <p className="text-xs uppercase tracking-widest text-slate-500">Años</p>
+              </div>
+              <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                <p className="text-2xl font-display font-semibold text-primary">100%</p>
+                <p className="text-xs uppercase tracking-widest text-slate-500">Higiene</p>
+              </div>
+              <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                <p className="text-2xl font-display font-semibold text-primary">+500</p>
+                <p className="text-xs uppercase tracking-widest text-slate-500">Pacientes</p>
+              </div>
+            </div>
           </div>
 
           {/* Image/Blob */}
-          <div className="lg:w-1/2 mt-12 lg:mt-0 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-secondary/10 rounded-full blur-3xl -z-10"></div>
+          <div className="lg:w-1/2 mt-14 lg:mt-0 relative">
+            <div className="absolute -top-8 -right-8 h-24 w-24 rounded-2xl bg-secondary/40 shadow-lg"></div>
+            <div className="absolute -bottom-6 left-12 h-16 w-16 rounded-full bg-primary/20"></div>
             <div className="relative w-80 h-80 lg:w-[520px] lg:h-[520px] mx-auto rounded-[28%] overflow-hidden border-[10px] border-white shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1584515933487-9bdb0936e811?auto=format&fit=crop&q=80&w=800"
@@ -52,67 +70,56 @@ export default function Home() {
                 className="w-full h-full object-cover"
               />
             </div>
+            <div className="absolute -bottom-10 right-6 rounded-2xl bg-white px-6 py-4 shadow-xl">
+              <p className="text-xs uppercase tracking-widest text-slate-500">Certificada</p>
+              <p className="text-lg font-semibold text-primary">Podología Clínica</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Sobre Mí / Formación */}
-      <section id="sobre-mi" className="max-w-4xl mx-auto px-4">
+      <section id="sobre-mi" className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
           <span className="text-secondary font-bold uppercase tracking-wider text-sm">Perfil Profesional</span>
           <h2 className="text-3xl font-display font-bold text-primary mt-2">Formación Académica</h2>
         </div>
-        
-        <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl p-8 md:p-12 border border-secondary/10 relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/10 rounded-bl-full -z-0"></div>
-           
-           <div className="grid md:grid-cols-2 gap-8 relative z-10">
-             <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-secondary/20 rounded-lg text-primary">
-                    <CheckCircle2 size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-primary">Título Técnico Nivel Superior</h3>
-                    <p className="text-gray-600 text-sm">Instituto Profesional AIEP</p>
-                    <p className="text-gray-400 text-xs mt-1">2018 - 2020</p>
-                  </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          {[
+            {
+              title: "Título Técnico Nivel Superior",
+              org: "Instituto Profesional AIEP",
+              year: "2018 - 2020",
+            },
+            {
+              title: "Diplomado en Pie Diabético",
+              org: "Universidad de Chile",
+              year: "2021",
+            },
+            {
+              title: "Certificación en Ortoplasia",
+              org: "Centro Clínico del Pie",
+              year: "2022",
+            },
+            {
+              title: "Registro SIS",
+              org: "Superintendencia de Salud",
+              year: "N° Registro: 458921",
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-2xl border border-secondary/20 bg-white/90 p-6 shadow-lg">
+              <div className="flex items-start gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-secondary/20 text-primary">
+                  <CheckCircle2 size={22} />
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-secondary/20 rounded-lg text-primary">
-                    <CheckCircle2 size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-primary">Diplomado en Pie Diabético</h3>
-                    <p className="text-gray-600 text-sm">Universidad de Chile</p>
-                    <p className="text-gray-400 text-xs mt-1">2021</p>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-primary">{item.title}</h3>
+                  <p className="text-sm text-slate-600">{item.org}</p>
+                  <p className="text-xs text-slate-500 mt-2">{item.year}</p>
                 </div>
-             </div>
-             
-             <div className="space-y-6">
-               <div className="flex items-start gap-4">
-                  <div className="p-3 bg-secondary/20 rounded-lg text-primary">
-                    <CheckCircle2 size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-primary">Certificación en Ortoplasia</h3>
-                    <p className="text-gray-600 text-sm">Centro Clínico del Pie</p>
-                    <p className="text-gray-400 text-xs mt-1">2022</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-secondary/20 rounded-lg text-primary">
-                    <CheckCircle2 size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-primary">Registro SIS</h3>
-                    <p className="text-gray-600 text-sm">Superintendencia de Salud</p>
-                    <p className="text-gray-400 text-xs mt-1">N° Registro: 458921</p>
-                  </div>
-                </div>
-             </div>
-           </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -124,21 +131,25 @@ export default function Home() {
             <p className="text-slate-600 mt-2">Resultados reales de mis tratamientos</p>
           </div>
 
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-10 px-4 scrollbar-hide">
+          <div className="grid gap-6 md:grid-cols-3">
             {cases.map((img, idx) => (
-              <div 
-                key={idx} 
-                className="snap-center shrink-0 w-[280px] md:w-[420px] h-[280px] md:h-[420px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
+              <div
+                key={idx}
+                className="group relative overflow-hidden rounded-3xl shadow-lg"
               >
-                <img 
-                  src={img} 
-                  alt={`Caso Clínico ${idx + 1}`} 
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                <img
+                  src={img}
+                  alt={`Caso Clínico ${idx + 1}`}
+                  className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
+                <span className="absolute bottom-4 left-4 rounded-full bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
+                  Caso {idx + 1}
+                </span>
               </div>
             ))}
           </div>
-          <p className="text-center text-sm text-gray-500 mt-4 italic">Desliza para ver más casos →</p>
+          <p className="text-center text-sm text-slate-500 mt-6 italic">Más casos disponibles en consulta</p>
         </div>
       </section>
     </div>

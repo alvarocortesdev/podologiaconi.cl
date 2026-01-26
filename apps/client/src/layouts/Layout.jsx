@@ -84,7 +84,7 @@ export default function Layout({ children }) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-primary text-white py-10 mt-auto">
+      <footer className="bg-primary text-white py-12 mt-auto">
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
           <div>
             <h3 className="text-xl font-bold mb-4">PodologíaConi</h3>
