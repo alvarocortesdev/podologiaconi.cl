@@ -6,7 +6,10 @@
     "server"
   ],
   "scripts": {
-    "build": "cd client && npm run build",
-    "postinstall": "cd server && npx prisma generate"
+    "build": "npm run build --workspace=client",
+    "postinstall": "npm run generate --workspace=server"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
