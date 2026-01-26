@@ -6,7 +6,10 @@
     "server"
   ],
   "scripts": {
-    "build": "npm run build --workspace=client",
-    "postinstall": "npm run generate --workspace=server"
+    "prisma:generate": "node ./node_modules/prisma/build/index.js generate --schema=server/prisma/schema.prisma",
+    "build": "npm run prisma:generate && npm run build --workspace=client"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0"
   }
 }
