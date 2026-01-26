@@ -1,32 +1,63 @@
-// index.js
+// server/index.js
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const { Resend } = require('resend');
 const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
+const SECRET_KEY = process.env.SECRET_KEY || 'supersecretkey';
 
 app.use(cors());
 app.use(express.json());
+
+// Middleware for auth
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
+
+// Login Route
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const admin = await prisma.admin.findUnique({ where: { username } });
+
+  if (!admin) return res.status(400).json({ error: 'Usuario no encontrado' });
+
+  const validPassword = await bcrypt.compare(password, admin.password);
+  if (!validPassword) return res.status(400).json({ error: 'Contraseña incorrecta' });
+
+  const token = jwt.sign({ username: admin.username }, SECRET_KEY, { expiresIn: '1h' });
+  res.json({ token });
+});
 
 // Routes
 // Get all services
 app.get('/api/services', async (req, res) => {
   try {
-    const services = await prisma.service.findMany();
+    const services = await prisma.service.findMany({ orderBy: { id: 'asc' } });
     res.json(services);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching services' });
   }
 });
 
-// Create a service (Admin only - middleware to be added)
-app.post('/api/services', async (req, res) => {
+// Create a service (Protected)
+app.post('/api/services', authenticateToken, async (req, res) => {
   try {
     const { name, description, price, category } = req.body;
     const service = await prisma.service.create({
@@ -38,8 +69,23 @@ app.post('/api/services', async (req, res) => {
   }
 });
 
-// Delete a service
-app.delete('/api/services/:id', async (req, res) => {
+// Update a service (Protected)
+app.put('/api/services/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, category } = req.body;
+    const service = await prisma.service.update({
+      where: { id: parseInt(id) },
+      data: { name, description, price: parseFloat(price), category },
+    });
+    res.json(service);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating service' });
+  }
+});
+
+// Delete a service (Protected)
+app.delete('/api/services/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.service.delete({ where: { id: parseInt(id) } });
