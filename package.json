@@ -6,8 +6,8 @@
     "server"
   ],
   "scripts": {
-    "build": "npm run generate --workspace=server && npm run build --workspace=client",
-    "postinstall": "npm run generate --workspace=server"
+    "build": "cd server && npm install && npx prisma generate && cd ../client && npm install && npm run build",
+    "postinstall": "cd server && npm install && npx prisma generate"
   },
   "engines": {
     "node": "18.x"
