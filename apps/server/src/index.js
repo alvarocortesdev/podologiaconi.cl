@@ -1,7 +1,7 @@
 // server/index.js
 const express = require('express');
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../../../packages/database/src');
 const { Resend } = require('resend');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
@@ -10,7 +10,6 @@ const jwt = require('jsonwebtoken');
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SECRET_KEY = process.env.SECRET_KEY || 'supersecretkey';
 

@@ -2,12 +2,12 @@
   "name": "podologiaconi-monorepo",
   "private": true,
   "workspaces": [
-    "apps/web",
-    "packages/api"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "prisma:generate": "node ./node_modules/prisma/build/index.js generate --schema=packages/api/prisma/schema.prisma",
-    "build": "npm run prisma:generate && npm run build --workspace=apps/web"
+    "prisma:generate": "node ./node_modules/prisma/build/index.js generate --schema=packages/database/prisma/schema.prisma",
+    "build": "npm run prisma:generate && npm run build --workspace=apps/client"
   },
   "devDependencies": {
     "prisma": "^5.10.0"
