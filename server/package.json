@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate": "prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -17,10 +18,10 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "resend": "^6.8.0"
+    "resend": "^6.8.0",
+    "@prisma/client": "^5.10.0"
   },
   "devDependencies": {
-    "@prisma/client": "^5.10.0",
     "nodemon": "^3.1.11",
     "prisma": "^5.10.0"
   }
