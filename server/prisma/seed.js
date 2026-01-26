@@ -1,8 +1,10 @@
 // server/prisma/seed.js
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
+  // Seed Services
   const services = [
     {
       name: 'Podología Clínica Integral',
@@ -43,12 +45,24 @@ async function main() {
   ];
 
   for (const service of services) {
-    await prisma.service.create({
-      data: service,
-    });
+    const exists = await prisma.service.findFirst({ where: { name: service.name } });
+    if (!exists) {
+      await prisma.service.create({ data: service });
+    }
   }
 
-  console.log('Seed data inserted');
+  // Seed Admin
+  const adminPassword = await bcrypt.hash('admin123', 10); // Default password
+  const admin = await prisma.admin.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      username: 'admin',
+      password: adminPassword,
+    },
+  });
+
+  console.log('Seed data inserted (Services & Admin)');
 }
 
 main()
