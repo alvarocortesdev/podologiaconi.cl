@@ -1,7 +1,9 @@
-// vercel.json
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/server/index.js" },
-    { "source": "/(.*)", "destination": "/client/index.html" }
-  ]
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/client/dist/index.html" }
+  ],
+  "buildCommand": "cd client && npm install && npm run build && cd ../server && npm install && npx prisma generate",
+  "outputDirectory": "client/dist",
+  "framework": "vite"
 }
