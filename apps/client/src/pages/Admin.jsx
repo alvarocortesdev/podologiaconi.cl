@@ -1,6 +1,6 @@
 // client/src/pages/Admin.jsx
 import React, { useState, useEffect } from 'react';
-import { Lock, Plus, Pencil, Trash2, X, LogOut } from 'lucide-react';
+import { Lock, Plus, Pencil, Trash2, X, LogOut, Loader2 } from 'lucide-react';
 
 export default function Admin() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -9,9 +9,8 @@ export default function Admin() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentService, setCurrentService] = useState(null); // null = create, object = edit
+  const [currentService, setCurrentService] = useState(null);
 
   useEffect(() => {
     if (token) {
@@ -20,37 +19,29 @@ export default function Admin() {
   }, [token]);
 
   const fetchServices = async () => {
-    try {
-      const res = await fetch('/api/services');
-      const data = await res.json();
-      setServices(data);
-    } catch (error) {
-      console.error('Error fetching services', error);
-    }
+    // Mock data for demonstration
+    const mockServices = [
+      { id: 1, name: 'Atención Podológica General', description: 'Corte y pulido de uñas, etc.', price: 25000, category: 'Clínico' },
+      { id: 2, name: 'Tratamiento Onicocriptosis', description: 'Manejo de uña encarnada.', price: 30000, category: 'Clínico' },
+      { id: 3, name: 'Reflexología Podal', description: 'Terapia de masajes.', price: 35000, category: 'Bienestar' },
+    ];
+    setServices(mockServices);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
+    // Mock login
+    setTimeout(() => {
+      if (username === 'admin' && password === 'password') {
+        const fakeToken = 'fake-jwt-token';
+        localStorage.setItem('token', fakeToken);
+        setToken(fakeToken);
       } else {
-        alert(data.error);
+        alert('Credenciales incorrectas (use admin/password)');
       }
-    } catch (error) {
-      console.error(error);
-      alert('Error de conexión');
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   const handleLogout = () => {
@@ -62,52 +53,24 @@ export default function Admin() {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = {
+      id: currentService ? currentService.id : Date.now(),
       name: formData.get('name'),
       description: formData.get('description'),
-      price: formData.get('price'),
+      price: parseInt(formData.get('price'), 10),
       category: formData.get('category'),
     };
 
-    const method = currentService ? 'PUT' : 'POST';
-    const url = currentService 
-      ? `/api/services/${currentService.id}`
-      : '/api/services';
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      });
-      
-      if (res.ok) {
-        setIsModalOpen(false);
-        fetchServices();
-      } else {
-        alert("Error al guardar servicio");
-      }
-    } catch (error) {
-      console.error(error);
+    if (currentService) {
+      setServices(services.map(s => s.id === data.id ? data : s));
+    } else {
+      setServices([...services, data]);
     }
+    setIsModalOpen(false);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este servicio?")) return;
-    
-    try {
-      const res = await fetch(`/api/services/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchServices();
-      }
-    } catch (error) {
-      console.error(error);
-    }
+    setServices(services.filter(s => s.id !== id));
   };
 
   const openModal = (service = null) => {
@@ -117,30 +80,30 @@ export default function Admin() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#f4ede6] flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
           <div className="text-center mb-8">
-            <div className="bg-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+            <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Lock size={32} />
             </div>
-            <h1 className="text-2xl font-bold text-primary">Acceso Administrador</h1>
-            <p className="text-gray-500">Ingresa tus credenciales para continuar</p>
+            <h1 className="text-3xl font-bold font-display text-primary">Área Privada</h1>
+            <p className="text-primary/70 mt-2">Ingresa tus credenciales para administrar los servicios.</p>
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+              <label className="block text-sm font-bold text-primary/80 mb-1">Usuario</label>
               <input
                 type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <label className="block text-sm font-bold text-primary/80 mb-1">Contraseña</label>
               <input
                 type="password"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -148,9 +111,9 @@ export default function Admin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors"
+              className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+              {loading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
             </button>
           </form>
         </div>
@@ -159,65 +122,71 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4ede6] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-          <h1 className="text-3xl font-bold text-primary">Gestión de Servicios</h1>
+          <div>
+            <h1 className="text-3xl font-bold font-display text-primary">Gestión de Servicios</h1>
+            <p className="text-primary/70 mt-1">Añade, edita o elimina servicios del catálogo.</p>
+          </div>
           <div className="flex gap-4">
             <button
               onClick={() => openModal()}
-              className="px-6 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-white transition-colors flex items-center gap-2 shadow-sm"
+              className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
             >
               <Plus size={20} /> Nuevo Servicio
             </button>
             <button
               onClick={handleLogout}
-              className="px-6 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 shadow-sm"
+              className="p-3 bg-white text-primary rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors flex items-center gap-2 shadow-sm border border-primary/10"
             >
-              <LogOut size={20} /> Salir
+              <LogOut size={20} />
             </button>
           </div>
         </div>
 
-        {/* Services Table */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-primary text-white">
+              <thead className="bg-primary/5 border-b border-primary/10">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">Servicio</th>
-                  <th className="px-6 py-4 font-semibold">Categoría</th>
-                  <th className="px-6 py-4 font-semibold">Precio</th>
-                  <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                  <th className="px-6 py-4 font-bold text-primary">Servicio</th>
+                  <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">Categoría</th>
+                  <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">Precio</th>
+                  <th className="px-6 py-4 font-bold text-primary text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-primary/5">
                 {services.map((service) => (
-                  <tr key={service.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={service.id} className="hover:bg-primary/5 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900">{service.name}</div>
-                      <div className="text-sm text-gray-500 max-w-xs truncate">{service.description}</div>
+                      <div className="font-bold text-primary">{service.name}</div>
+                      <div className="text-sm text-primary/60 max-w-xs truncate">{service.description}</div>
+                      <div className="sm:hidden mt-2">
+                        <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
+                          {service.category}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="hidden sm:table-cell px-6 py-4 align-middle">
                       <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
                         {service.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-700">
+                    <td className="hidden lg:table-cell px-6 py-4 font-medium text-primary/80 align-middle">
                       ${service.price.toLocaleString('es-CL')}
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
+                    <td className="px-6 py-4 text-right space-x-2 align-middle">
                       <button 
                         onClick={() => openModal(service)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg transition-colors"
                       >
                         <Pencil size={18} />
                       </button>
                       <button 
                         onClick={() => handleDelete(service.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-red-600/70 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -229,79 +198,55 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Modal Create/Edit */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative animate-fade-in">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative animate-fade-in-up">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X size={24} />
               </button>
               
-              <h2 className="text-2xl font-bold text-primary mb-6">
-                {currentService ? 'Editar Servicio' : 'Nuevo Servicio'}
+              <h2 className="text-2xl font-bold font-display text-primary mb-6">
+                {currentService ? 'Editar Servicio' : 'Crear Nuevo Servicio'}
               </h2>
 
               <form onSubmit={handleSubmitService} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <input
-                    required
-                    name="name"
-                    defaultValue={currentService?.name}
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  />
+                  <label className="block text-sm font-bold text-primary/80 mb-1">Nombre</label>
+                  <input required name="name" defaultValue={currentService?.name} type="text" className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-primary/5"/>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                  <textarea
-                    required
-                    name="description"
-                    defaultValue={currentService?.description}
-                    rows="3"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  ></textarea>
+                  <label className="block text-sm font-bold text-primary/80 mb-1">Descripción</label>
+                  <textarea required name="description" defaultValue={currentService?.description} rows="3" className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-primary/5"></textarea>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-                    <input
-                      required
-                      name="price"
-                      defaultValue={currentService?.price}
-                      type="number"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                    />
+                    <label className="block text-sm font-bold text-primary/80 mb-1">Precio</label>
+                    <input required name="price" defaultValue={currentService?.price} type="number" className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-primary/5"/>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                    <select
-                      name="category"
-                      defaultValue={currentService?.category || 'Clínico'}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                    >
-                      <option value="Clínico">Clínico</option>
-                      <option value="Estético">Estético</option>
-                      <option value="Ortopedia">Ortopedia</option>
-                      <option value="Bienestar">Bienestar</option>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">Categoría</label>
+                    <select name="category" defaultValue={currentService?.category || 'Clínico'} className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-primary/5">
+                      <option>Clínico</option>
+                      <option>Estético</option>
+                      <option>Ortopedia</option>
+                      <option>Bienestar</option>
                     </select>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors mt-4"
+                  className="w-full mt-4 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors"
                 >
-                  Guardar
+                  {currentService ? 'Guardar Cambios' : 'Crear Servicio'}
                 </button>
               </form>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap");
 
 @config "../tailwind.config.cjs";
 
@@ -11,12 +11,12 @@
 }
 
 body {
-  font-family: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  background-color: #f4ede6;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background-color: #fcecd5;
 }
 
 h1, h2, h3, h4 {
-  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-family: "Lato", ui-serif, Georgia, serif;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
