@@ -1063,6 +1063,73 @@ export default function Admin() {
               )}
 
               <form onSubmit={handleSaveConfig} className="space-y-8">
+                {/* About Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <FileText size={20} /> Sección Sobre Mí
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Título
+                      </label>
+                      <input
+                        name="aboutTitle"
+                        defaultValue={siteConfig?.aboutTitle}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Descripción
+                      </label>
+                      <textarea
+                        name="aboutText"
+                        defaultValue={siteConfig?.aboutText}
+                        rows="4"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <ImageUpload
+                        value={configAboutImage}
+                        onChange={setConfigAboutImage}
+                        label="Imagen"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hero Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <Layout size={20} /> Sección Principal (Hero)
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Título Principal
+                      </label>
+                      <input
+                        name="heroTitle"
+                        defaultValue={siteConfig?.heroTitle}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Subtítulo
+                      </label>
+                      <textarea
+                        name="heroSubtitle"
+                        defaultValue={siteConfig?.heroSubtitle}
+                        rows="2"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Contact Info */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
                   <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
@@ -1101,76 +1168,6 @@ export default function Admin() {
                       />
                     </div>
                     {/* Facebook Removed */}
-                  </div>
-                </div>
-
-                {/* Hero Section */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                    <Layout size={20} /> Sección Principal (Hero)
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Título Principal
-                      </label>
-                      <input
-                        name="heroTitle"
-                        defaultValue={siteConfig?.heroTitle}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Subtítulo
-                      </label>
-                      <textarea
-                        name="heroSubtitle"
-                        defaultValue={siteConfig?.heroSubtitle}
-                        rows="2"
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* About Section */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                    <FileText size={20} /> Sección Sobre Mí
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Título
-                      </label>
-                      <input
-                        name="aboutTitle"
-                        defaultValue={siteConfig?.aboutTitle}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Descripción
-                      </label>
-                      <textarea
-                        name="aboutText"
-                        defaultValue={siteConfig?.aboutText}
-                        rows="4"
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Imagen URL
-                      </label>
-                      <input
-                        name="aboutImage"
-                        defaultValue={siteConfig?.aboutImage}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
                   </div>
                 </div>
 
