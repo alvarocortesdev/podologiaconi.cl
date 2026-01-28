@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 
 export default function Home() {
   const cases = [
-    "https://images.unsplash.com/photo-1600885144640-3cfc60c88a8d?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1576091160550-2173dba9996a?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1618939307823-f24e93c1a329?auto=format&fit=crop&q=80&w=800"
+    "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso1_x0zqpj.jpg",
+    "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso2_zzp3k2.jpg",
+    "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso3_sthwhb.jpg"
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function Home() {
               <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-[480px] lg:h-[480px] bg-primary/10 rounded-full p-3 sm:p-4">
                 <div className="w-full h-full rounded-full overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
                   <img
-                    src="https://images.unsplash.com/photo-1584515933487-9bdb0936e811?auto=format&fit=crop&q=80&w=800"
+                    src="https://res.cloudinary.com/peluimages/image/upload/v1769562964/avatar_zi9gw0.jpg"
                     alt="Podóloga Coni - Especialista en cuidado podológico integral"
                     className="w-full h-full object-cover"
                     loading="lazy"
