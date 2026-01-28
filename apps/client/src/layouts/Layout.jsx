@@ -1,6 +1,6 @@
 // client/src/layouts/Layout.jsx
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
@@ -18,7 +18,6 @@ import { IntroContext } from "../context/IntroContext";
 export default function Layout({ children }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   const [introStep, setIntroStep] = React.useState(() => {
     if (typeof window !== "undefined") {
@@ -53,7 +52,7 @@ export default function Layout({ children }) {
         setIntroStep(6);
       }
     }
-  }, []);
+  }, [location.pathname]);
 
   const navLinks = [
     { name: "Inicio", path: "/" },
@@ -63,14 +62,10 @@ export default function Layout({ children }) {
 
   const handleScrollTo = (e, id) => {
     e.preventDefault();
-    if (location.pathname !== "/") {
-      navigate("/", { state: { scrollTo: id } });
-    } else {
-      const element = document.querySelector(id);
-      if (element) {
-        const targetY = element.getBoundingClientRect().top + window.scrollY;
-        animateScroll(targetY, 1000);
-      }
+    const element = document.querySelector(id);
+    if (element) {
+      const targetY = element.getBoundingClientRect().top + window.scrollY;
+      animateScroll(targetY, 2000);
     }
   };
 
@@ -80,15 +75,15 @@ export default function Layout({ children }) {
       const element = document.querySelector(scrollTo);
       if (element) {
         const targetY = element.getBoundingClientRect().top + window.scrollY;
-        animateScroll(targetY, 1000);
+        animateScroll(targetY, 2000);
       }
     } else {
-      animateScroll(0, 1000);
+      animateScroll(0, 2000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
+  }, [location.key, location.pathname]);
 
-  const animateScroll = (targetY, duration = 1000) => {
+  const animateScroll = (targetY, duration = 2000) => {
     const startY = window.scrollY || window.pageYOffset;
     const distance = targetY - startY;
     const startTime = performance.now();
