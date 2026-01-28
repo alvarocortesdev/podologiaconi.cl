@@ -445,6 +445,8 @@ app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
 
     if (!Array.isArray(cards)) return res.status(400).json({ error: 'Invalid data format: cards must be an array' });
 
+    console.log('Reordering cards payload:', JSON.stringify(cards));
+
     // Validate and prepare updates
     const updates = cards.map(card => {
       const id = parseInt(card.id);
@@ -469,7 +471,12 @@ app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Reorder error details:', error);
     // Send the actual error message to the client for better debugging
-    res.status(500).json({ error: error.message || 'Error reordering cards' });
+    res.status(500).json({
+      error: 'Error reordering cards',
+      details: error.message,
+      code: error.code,
+      meta: error.meta
+    });
   }
 });
 
