@@ -4,7 +4,7 @@ Sitio web para Podóloga Constanza Cortés: www.podologiaconi.cl
 
 ## Descripción del Proyecto
 
-Aplicación web full-stack para la práctica podológica de Constanza Cortés. Incluye un sitio web público con información de servicios, casos de éxito y formulario de cotización, además de un panel administrativo para gestionar servicios.
+Aplicación web full-stack para la podológa Constanza Cortés. Incluye un sitio web público con información de servicios, casos de éxito y formulario de cotización, además de un panel administrativo para gestionar servicios (pendiente implementar).
 
 ## Stack Tecnológico
 
@@ -165,6 +165,6 @@ Endpoints disponibles:
 
 ## Notas Adicionales
 
-- El panel admin está disponible en `/admin`
-- Las imágenes de casos de éxito son referenciales (Unsplash)
+- El panel admin estará disponible en `/admin`
+- Las imágenes de casos de éxito son temporales, alojadas en Cloudinary.
 - El sistema de autenticación usa JWT con expiración de 1 hora
