@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { useDropzone } from "react-dropzone";
 import {
@@ -12,25 +12,48 @@ import {
 } from "lucide-react";
 import getCroppedImg from "../utils/canvasUtils";
 
-const ASPECT_RATIOS = [
-  { label: "Libre", value: null },
-  { label: "1:1", value: 1 / 1 },
-  { label: "16:9", value: 16 / 9 },
-  { label: "4:3", value: 4 / 3 },
-  { label: "9:16", value: 9 / 16 },
-  { label: "3:4", value: 3 / 4 },
+// Definición de ratios con separadores y estructura para filas móviles
+// Estructura visual requerida:
+// Fila 1: 1:1
+// Fila 2: 16:9, 5:4, 4:3, 3:2
+// Fila 3: 9:16, 4:5, 3:4, 2:3
+// Fila 4: Libre
+
+// Agruparemos por filas para facilitar el renderizado
+const ASPECT_GROUPS = [
+  [{ label: "1:1", value: 1 / 1 }],
+  [
+    { label: "16:9", value: 16 / 9 },
+    { label: "5:4", value: 5 / 4 },
+    { label: "4:3", value: 4 / 3 },
+    { label: "3:2", value: 3 / 2 },
+  ],
+  [
+    { label: "9:16", value: 9 / 16 },
+    { label: "4:5", value: 4 / 5 },
+    { label: "3:4", value: 3 / 4 },
+    { label: "2:3", value: 2 / 3 },
+  ],
+  [{ label: "Libre", value: null }],
 ];
 
 export default function ImageUpload({ value, onChange, label }) {
   const [imageSrc, setImageSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [aspect, setAspect] = useState(null);
+  const [aspect, setAspect] = useState(1); // Default to 1:1
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropping, setIsCropping] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [fileToUpload, setFileToUpload] = useState(null);
   const [uploading, setUploading] = useState(false);
+
+  // Auto-upload when fileToUpload changes
+  useEffect(() => {
+    if (fileToUpload) {
+      handleUpload();
+    }
+  }, [fileToUpload]);
 
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -42,8 +65,9 @@ export default function ImageUpload({ value, onChange, label }) {
       const imageDataUrl = await readFile(file);
       setImageSrc(imageDataUrl);
       setIsCropping(true);
-      setPreviewUrl(null); 
+      setPreviewUrl(null);
       setFileToUpload(null);
+      setAspect(1); // Reset to 1:1 default on new file
     }
   }, []);
 
@@ -70,15 +94,17 @@ export default function ImageUpload({ value, onChange, label }) {
       const croppedImageBlob = await getCroppedImg(
         imageSrc,
         croppedAreaPixels,
-        0 
+        0,
       );
-      
+
       const preview = URL.createObjectURL(croppedImageBlob);
       setPreviewUrl(preview);
+      // Set file to upload, which triggers the useEffect
       setFileToUpload(croppedImageBlob);
       setIsCropping(false);
     } catch (e) {
       console.error(e);
+      alert("Error al recortar la imagen");
     }
   };
 
@@ -115,30 +141,30 @@ export default function ImageUpload({ value, onChange, label }) {
   };
 
   const handleDelete = async () => {
-      if (!value) return;
+    if (!value) return;
 
-      if (window.confirm("¿Estás seguro de eliminar esta imagen?")) {
-          try {
-             const token = localStorage.getItem("token");
-             await fetch('/api/upload/delete', {
-                 method: 'POST',
-                 headers: { 
-                     'Content-Type': 'application/json',
-                     Authorization: `Bearer ${token}` 
-                 },
-                 body: JSON.stringify({ url: value })
-             });
-             onChange(null); 
-          } catch(e) {
-              console.error(e);
-              alert("Error al eliminar imagen");
-          }
+    if (window.confirm("¿Estás seguro de eliminar esta imagen?")) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch("/api/upload/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ url: value }),
+        });
+        onChange(null);
+      } catch (e) {
+        console.error(e);
+        alert("Error al eliminar imagen");
       }
+    }
   };
 
   const handleCancelCrop = () => {
-      setIsCropping(false);
-      setImageSrc(null);
+    setIsCropping(false);
+    setImageSrc(null);
   };
 
   const showCurrent = value && !previewUrl && !isCropping;
@@ -150,7 +176,6 @@ export default function ImageUpload({ value, onChange, label }) {
       </label>
 
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 transition-colors hover:border-primary/50 bg-gray-50">
-        
         {showCurrent && (
           <div className="relative group w-full h-48 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center mb-4">
             <img
@@ -159,9 +184,9 @@ export default function ImageUpload({ value, onChange, label }) {
               className="w-full h-full object-contain"
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-              <a 
-                href={value} 
-                target="_blank" 
+              <a
+                href={value}
+                target="_blank"
                 rel="noreferrer"
                 className="p-2 bg-white rounded-full text-gray-800 hover:bg-gray-100"
               >
@@ -179,62 +204,70 @@ export default function ImageUpload({ value, onChange, label }) {
         )}
 
         {previewUrl && (
-           <div className="relative w-full h-48 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center mb-4 border-2 border-primary">
-             <img src={previewUrl} alt="To Upload" className="w-full h-full object-contain" />
-             <button 
-                onClick={() => { setPreviewUrl(null); setFileToUpload(null); }}
-                className="absolute top-2 right-2 p-1 bg-white rounded-full text-red-500 shadow-sm"
-             >
-                 <X size={16} />
-             </button>
-           </div>
+          <div className="relative w-full h-48 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center mb-4 border-2 border-primary">
+            <img
+              src={previewUrl}
+              alt="To Upload"
+              className="w-full h-full object-contain"
+            />
+            <button
+              onClick={() => {
+                setPreviewUrl(null);
+                setFileToUpload(null);
+              }}
+              className="absolute top-2 right-2 p-1 bg-white rounded-full text-red-500 shadow-sm"
+            >
+              <X size={16} />
+            </button>
+          </div>
         )}
 
         {!isCropping && (
-            <div className="flex flex-col items-center justify-center gap-3">
-                {!previewUrl && !showCurrent && (
-                     <div {...getRootProps()} className="text-center cursor-pointer p-6 w-full">
-                        <input {...getInputProps()} />
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 text-primary">
-                            <Upload size={24} />
-                        </div>
-                        <p className="text-sm text-gray-500 font-medium">
-                           Arrastra una imagen aquí
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                           JPG, PNG
-                        </p>
-                     </div>
-                )}
-
-                <div className="flex gap-3 w-full">
-                    {!previewUrl ? (
-                         <div {...getRootProps()} className="flex-1">
-                             <input {...getInputProps()} />
-                             <button
-                                type="button"
-                                className="w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                             >
-                                 <ImageIcon size={18} />
-                                 Examinar
-                             </button>
-                         </div>
-                    ) : (
-                        <div className="w-full flex items-center justify-center py-4">
-                            {uploading ? (
-                                <div className="flex items-center gap-2 text-primary">
-                                    <Loader2 className="animate-spin" size={20} />
-                                    <span className="font-medium">Subiendo imagen...</span>
-                                </div>
-                            ) : (
-                                <span className="text-green-600 font-medium flex items-center gap-2">
-                                    <Check size={20} /> ¡Lista para guardar!
-                                </span>
-                            )}
-                        </div>
-                    )}
+          <div className="flex flex-col items-center justify-center gap-3">
+            {!previewUrl && !showCurrent && (
+              <div
+                {...getRootProps()}
+                className="text-center cursor-pointer p-6 w-full"
+              >
+                <input {...getInputProps()} />
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 text-primary">
+                  <Upload size={24} />
                 </div>
+                <p className="text-sm text-gray-500 font-medium">
+                  Arrastra una imagen aquí
+                </p>
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG</p>
+              </div>
+            )}
+
+            <div className="flex gap-3 w-full">
+              {!previewUrl ? (
+                <div {...getRootProps()} className="flex-1">
+                  <input {...getInputProps()} />
+                  <button
+                    type="button"
+                    className="w-full py-2 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ImageIcon size={18} />
+                    Examinar
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full flex items-center justify-center py-4">
+                  {uploading ? (
+                    <div className="flex items-center gap-2 text-primary">
+                      <Loader2 className="animate-spin" size={20} />
+                      <span className="font-medium">Subiendo imagen...</span>
+                    </div>
+                  ) : (
+                    <span className="text-green-600 font-medium flex items-center gap-2">
+                      <Check size={20} /> ¡Lista para guardar!
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
+          </div>
         )}
       </div>
 
@@ -243,73 +276,80 @@ export default function ImageUpload({ value, onChange, label }) {
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
               <h3 className="font-bold text-lg">Editar Imagen</h3>
-              <button onClick={handleCancelCrop} className="p-2 hover:bg-gray-100 rounded-full">
+              <button
+                onClick={handleCancelCrop}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="relative flex-1 min-h-[400px] bg-gray-900">
-               <Cropper
-                  image={imageSrc}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={aspect}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-               />
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={aspect}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
             </div>
 
             <div className="p-4 bg-white space-y-4">
-                <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-500">Zoom</p>
-                    <input
-                      type="range"
-                      value={zoom}
-                      min={1}
-                      max={3}
-                      step={0.1}
-                      aria-labelledby="Zoom"
-                      onChange={(e) => setZoom(e.target.value)}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-500">Zoom</p>
+                <input
+                  type="range"
+                  value={zoom}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  aria-labelledby="Zoom"
+                  onChange={(e) => setZoom(e.target.value)}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
 
-                <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-500">Formato</p>
-                    <div className="flex flex-wrap gap-2">
-                        {ASPECT_RATIOS.map((ratio) => (
-                            <button
-                                key={ratio.label}
-                                type="button"
-                                onClick={() => setAspect(ratio.value)}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                                    aspect === ratio.value 
-                                    ? "bg-primary text-white" 
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                }`}
-                            >
-                                {ratio.label}
-                            </button>
-                        ))}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-500">Formato</p>
+                <div className="flex flex-col gap-2">
+                  {ASPECT_GROUPS.map((group, groupIndex) => (
+                    <div key={groupIndex} className="flex flex-wrap gap-2">
+                      {group.map((ratio) => (
+                        <button
+                          key={ratio.label}
+                          type="button"
+                          onClick={() => setAspect(ratio.value)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                            aspect === ratio.value
+                              ? "bg-primary text-white"
+                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }`}
+                        >
+                          {ratio.label}
+                        </button>
+                      ))}
                     </div>
+                  ))}
                 </div>
+              </div>
 
-                <div className="flex justify-end gap-3 pt-2 border-t">
-                    <button
-                        onClick={handleCancelCrop}
-                        className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleCropConfirm}
-                        className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 flex items-center gap-2"
-                    >
-                        <Check size={18} />
-                        Recortar
-                    </button>
-                </div>
+              <div className="flex justify-end gap-3 pt-2 border-t">
+                <button
+                  onClick={handleCancelCrop}
+                  className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCropConfirm}
+                  className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 flex items-center gap-2"
+                >
+                  <Check size={18} />
+                  Recortar
+                </button>
+              </div>
             </div>
           </div>
         </div>
