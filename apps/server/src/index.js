@@ -98,14 +98,14 @@ app.delete('/api/services/:id', authenticateToken, async (req, res) => {
 app.post('/api/quote', async (req, res) => {
   try {
     const { name, email, phone, services } = req.body;
-    const serviceList = services.map(s => `- ${s.name}: $${s.price}`).join('\n');
-    const total = services.reduce((acc, s) => acc + s.price, 0);
+    const serviceList = services.map(s => `- ${s.name}`).join('\n');
+    const emailLine = email ? `Email: ${email}\n` : '';
 
     const { data, error } = await resend.emails.send({
       from: 'Podología Coni <onboarding@resend.dev>',
       to: ['alvarocortesdev@gmail.com'], // Replace with admin email
       subject: `Nueva Cotización de ${name}`,
-      text: `Nombre: ${name}\nEmail: ${email}\nTeléfono: ${phone}\n\nServicios Cotizados:\n${serviceList}\n\nTotal Estimado: $${total}`,
+      text: `Nombre: ${name}\n${emailLine}Teléfono: ${phone}\n\nServicios Seleccionados:\n${serviceList}`,
     });
 
     if (error) {
