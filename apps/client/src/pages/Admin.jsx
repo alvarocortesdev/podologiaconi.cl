@@ -8,6 +8,8 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [servicesLoading, setServicesLoading] = useState(false);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState(null);
@@ -19,29 +21,61 @@ export default function Admin() {
   }, [token]);
 
   const fetchServices = async () => {
-    // Mock data for demonstration
-    const mockServices = [
-      { id: 1, name: 'Atención Podológica General', description: 'Corte y pulido de uñas, etc.', price: 25000, category: 'Clínico' },
-      { id: 2, name: 'Tratamiento Onicocriptosis', description: 'Manejo de uña encarnada.', price: 30000, category: 'Clínico' },
-      { id: 3, name: 'Reflexología Podal', description: 'Terapia de masajes.', price: 35000, category: 'Bienestar' },
-    ];
-    setServices(mockServices);
+    try {
+      setServicesLoading(true);
+      setError(null);
+      const response = await fetch('/api/services');
+      
+      if (!response.ok) {
+        throw new Error(`Error al cargar servicios: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setServices(data);
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setError(err.message);
+      alert(`Error al cargar servicios: ${err.message}`);
+    } finally {
+      setServicesLoading(false);
+    }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Mock login
-    setTimeout(() => {
-      if (username === 'admin' && password === 'password') {
-        const fakeToken = 'fake-jwt-token';
-        localStorage.setItem('token', fakeToken);
-        setToken(fakeToken);
-      } else {
-        alert('Credenciales incorrectas (use admin/password)');
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al iniciar sesión');
       }
+
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUsername('');
+        setPassword('');
+      } else {
+        throw new Error('No se recibió token de autenticación');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message);
+      alert(err.message || 'Credenciales incorrectas');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleLogout = () => {
@@ -51,31 +85,86 @@ export default function Admin() {
 
   const handleSubmitService = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = {
-      id: currentService ? currentService.id : Date.now(),
-      name: formData.get('name'),
-      description: formData.get('description'),
-      price: parseInt(formData.get('price'), 10),
-      category: formData.get('category'),
-    };
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData(e.target);
+      const data = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        price: parseFloat(formData.get('price')),
+        category: formData.get('category'),
+      };
 
-    if (currentService) {
-      setServices(services.map(s => s.id === data.id ? data : s));
-    } else {
-      setServices([...services, data]);
+      const url = currentService 
+        ? `/api/services/${currentService.id}`
+        : '/api/services';
+      
+      const method = currentService ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || `Error al ${currentService ? 'actualizar' : 'crear'} servicio`);
+      }
+
+      // Refresh services list
+      await fetchServices();
+      setIsModalOpen(false);
+      setCurrentService(null);
+    } catch (err) {
+      console.error('Error submitting service:', err);
+      setError(err.message);
+      alert(err.message || `Error al ${currentService ? 'actualizar' : 'crear'} servicio`);
+    } finally {
+      setLoading(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este servicio?")) return;
-    setServices(services.filter(s => s.id !== id));
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/services/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al eliminar servicio');
+      }
+
+      // Refresh services list
+      await fetchServices();
+    } catch (err) {
+      console.error('Error deleting service:', err);
+      setError(err.message);
+      alert(err.message || 'Error al eliminar servicio');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openModal = (service = null) => {
     setCurrentService(service);
     setIsModalOpen(true);
+    setError(null);
   };
 
   if (!token) {
@@ -108,6 +197,11 @@ export default function Admin() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
             <button
               type="submit"
               disabled={loading}
@@ -146,19 +240,38 @@ export default function Admin() {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-primary/5 border-b border-primary/10">
-                <tr>
-                  <th className="px-6 py-4 font-bold text-primary">Servicio</th>
-                  <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">Categoría</th>
-                  <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">Precio</th>
-                  <th className="px-6 py-4 font-bold text-primary text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-primary/5">
-                {services.map((service) => (
+          {servicesLoading ? (
+            <div className="p-12 text-center">
+              <Loader2 className="animate-spin mx-auto text-primary mb-4" size={32} />
+              <p className="text-primary/70">Cargando servicios...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-primary/5 border-b border-primary/10">
+                  <tr>
+                    <th className="px-6 py-4 font-bold text-primary">Servicio</th>
+                    <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">Categoría</th>
+                    <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">Precio</th>
+                    <th className="px-6 py-4 font-bold text-primary text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/5">
+                  {services.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-12 text-center text-primary/60">
+                        No hay servicios disponibles. Crea uno nuevo para comenzar.
+                      </td>
+                    </tr>
+                  ) : (
+                    services.map((service) => (
                   <tr key={service.id} className="hover:bg-primary/5 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-bold text-primary">{service.name}</div>
@@ -191,18 +304,24 @@ export default function Admin() {
                         <Trash2 size={18} />
                       </button>
                     </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative animate-fade-in-up">
               <button 
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setCurrentService(null);
+                  setError(null);
+                }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X size={24} />
@@ -237,11 +356,24 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
                 <button
                   type="submit"
-                  className="w-full mt-4 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors"
+                  disabled={loading}
+                  className="w-full mt-4 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {currentService ? 'Guardar Cambios' : 'Crear Servicio'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      {currentService ? 'Guardando...' : 'Creando...'}
+                    </>
+                  ) : (
+                    currentService ? 'Guardar Cambios' : 'Crear Servicio'
+                  )}
                 </button>
               </form>
             </div>
