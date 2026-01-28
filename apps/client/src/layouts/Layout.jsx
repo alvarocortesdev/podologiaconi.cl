@@ -1,31 +1,44 @@
 // client/src/layouts/Layout.jsx
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Instagram, Mail, Phone, Globe, Linkedin, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Layout({ children }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navLinks = [
     { name: 'Inicio', path: '/' },
     { name: 'Servicios', path: '/servicios' },
-    { name: 'Contacto', path: '#contacto' }, // Updated to be an anchor link
+    { name: 'Contacto', path: '#contacto' },
   ];
 
   const handleScrollTo = (e, id) => {
+    e.preventDefault();
     if (location.pathname !== '/') {
-      // If not on home page, navigate and then scroll
-      window.location.href = '/' + id;
+      navigate('/', { state: { scrollTo: id } });
     } else {
-      e.preventDefault();
       const element = document.querySelector(id);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     }
   };
+
+  React.useEffect(() => {
+    const scrollTo = location.state && location.state.scrollTo;
+    if (scrollTo) {
+      const element = document.querySelector(scrollTo);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans text-primary">
