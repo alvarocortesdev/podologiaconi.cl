@@ -128,9 +128,9 @@ app.post('/api/quote', async (req, res) => {
 
     // Send email via Resend
     const { data, error } = await resend.emails.send({
-      from: 'Podología Coni <contacto@podologiaconi.cl>',
+      from: 'Cotización Web <contacto@podologiaconi.cl>',
       to: ['podologiaconi@outlook.com', 'constanza.cortes9@gmail.com'],
-      subject: `Cotización Web - podologiaconi.cl`,
+      subject: `Cliente: ${name}`,
       text: `Nombre: ${name}\n${emailLine}Teléfono: ${phone}\n\nServicios Seleccionados:\n${serviceList}`,
     });
 
