@@ -117,6 +117,32 @@ Este proyecto está bajo la Licencia MIT.
 
 Copyright (c) 2026 Alvaro "Pelusa" Cortés - alvaro.cortes.dev@outlook.com - github.com/alvarocortesdev
 
+## Administración de Usuarios
+
+### Usuarios por Defecto
+El sistema cuenta con dos usuarios administrativos pre-configurados:
+- **dev**: Usuario para desarrolladores (Clave inicial: `d3v3l0p3r`)
+- **admin**: Usuario para el cliente (Clave inicial: `4dm1n1str4d0r`)
+
+### Flujo de Primer Ingreso
+Al ingresar por primera vez con las credenciales por defecto, el sistema exigirá:
+1. Validar un correo electrónico mediante código temporal (OTP).
+2. Cambiar la contraseña por una segura.
+3. Configurar autenticación de dos pasos (2FA) vía email.
+
+### Restablecer Acceso (Olvido de Contraseña)
+Si un administrador pierde su acceso o contraseña, un desarrollador puede restablecer su cuenta al estado inicial (requiriendo configuración nuevamente) ejecutando el siguiente script desde la raíz del proyecto:
+
+```bash
+# Para restablecer el usuario 'admin'
+node apps/server/scripts/reset-admin.js admin
+
+# Para restablecer el usuario 'dev'
+node apps/server/scripts/reset-admin.js dev
+```
+
+Esto restablecerá la contraseña a su valor por defecto y eliminará la configuración de 2FA.
+
 ## Deployment en Vercel
 
 ### Configuración Inicial

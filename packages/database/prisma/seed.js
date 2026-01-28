@@ -51,18 +51,33 @@ async function main() {
     }
   }
 
-  // Seed Admin
-  const adminPassword = await bcrypt.hash('admin123', 10); // Default password
-  const admin = await prisma.admin.upsert({
+  // Seed Admin and Dev
+  const adminPassword = await bcrypt.hash('4dm1n1str4d0r', 10);
+  const devPassword = await bcrypt.hash('d3v3l0p3r', 10);
+
+  // Admin user
+  await prisma.admin.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: { password: adminPassword }, // Update password if exists to ensure it matches requirement
     create: {
       username: 'admin',
       password: adminPassword,
+      isSetup: false,
     },
   });
 
-  console.log('Seed data inserted (Services & Admin)');
+  // Dev user
+  await prisma.admin.upsert({
+    where: { username: 'dev' },
+    update: { password: devPassword },
+    create: {
+      username: 'dev',
+      password: devPassword,
+      isSetup: false,
+    },
+  });
+
+  console.log('Seed data inserted (Services & Admins: admin/dev)');
 }
 
 main()

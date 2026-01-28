@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { prisma } = require('../../../packages/database/src');
 const { Resend } = require('resend');
+const crypto = require('crypto');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -12,6 +13,11 @@ dotenv.config();
 const app = express();
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SECRET_KEY = process.env.SECRET_KEY || 'supersecretkey';
+
+// Helper to generate 8 char alphanumeric code
+const generateCode = () => {
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
+};
 
 app.use(cors());
 app.use(express.json());
@@ -40,9 +46,136 @@ app.post('/api/login', async (req, res) => {
   const validPassword = await bcrypt.compare(password, admin.password);
   if (!validPassword) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
-  const token = jwt.sign({ username: admin.username }, SECRET_KEY, { expiresIn: '1h' });
+  // Check if setup is required
+  if (!admin.isSetup) {
+    const tempToken = jwt.sign({ username: admin.username, scope: 'setup' }, SECRET_KEY, { expiresIn: '15m' });
+    return res.json({ status: 'SETUP_REQUIRED', token: tempToken });
+  }
+
+  // If setup is done, trigger 2FA
+  const code = generateCode();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+
+  await prisma.admin.update({
+    where: { username },
+    data: { 
+      verificationCode: code,
+      verificationCodeExpiresAt: expiresAt
+    }
+  });
+
+  // Send 2FA email
+  try {
+    await resend.emails.send({
+      from: 'noreply@podologiaconi.cl', // As requested
+      to: [admin.email],
+      subject: 'Código de Verificación - Podología Coni',
+      text: `Tu código de acceso es: ${code}\n\nEste código expira en 5 minutos.`,
+    });
+  } catch (error) {
+    console.error('Error sending 2FA email:', error);
+    // Continue anyway to allow user to enter code if they received it previously or try resend
+  }
+
+  const tempToken = jwt.sign({ username: admin.username, scope: '2fa' }, SECRET_KEY, { expiresIn: '15m' });
+  res.json({ status: '2FA_REQUIRED', token: tempToken });
+});
+
+// Auth Routes
+
+// Send Verification Code (for Setup)
+app.post('/api/auth/send-code', authenticateToken, async (req, res) => {
+  const { email } = req.body;
+  const { username, scope } = req.user;
+
+  if (scope !== 'setup') return res.status(403).json({ error: 'Invalid scope for this action' });
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  const code = generateCode();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+
+  await prisma.admin.update({
+    where: { username },
+    data: { 
+      verificationCode: code,
+      verificationCodeExpiresAt: expiresAt
+    }
+  });
+
+  try {
+    await resend.emails.send({
+      from: 'noreply@podologiaconi.cl',
+      to: [email],
+      subject: 'Código de Verificación - Configuración Inicial',
+      text: `Tu código de validación es: ${code}\n\nEste código expira en 5 minutos.`,
+    });
+    res.json({ message: 'Code sent successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error sending email' });
+  }
+});
+
+// Setup Account (First Time)
+app.post('/api/auth/setup', authenticateToken, async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  const { username, scope } = req.user;
+
+  if (scope !== 'setup') return res.status(403).json({ error: 'Invalid scope' });
+
+  const admin = await prisma.admin.findUnique({ where: { username } });
+
+  if (!admin.verificationCode || admin.verificationCode !== code) {
+    return res.status(400).json({ error: 'Código inválido' });
+  }
+
+  if (new Date() > admin.verificationCodeExpiresAt) {
+    return res.status(400).json({ error: 'El código ha expirado' });
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.admin.update({
+    where: { username },
+    data: {
+      email,
+      password: hashedPassword,
+      isSetup: true,
+      verificationCode: null,
+      verificationCodeExpiresAt: null
+    }
+  });
+
+  res.json({ message: 'Setup completed successfully' });
+});
+
+// Verify 2FA
+app.post('/api/auth/verify-2fa', authenticateToken, async (req, res) => {
+  const { code } = req.body;
+  const { username, scope } = req.user;
+
+  if (scope !== '2fa') return res.status(403).json({ error: 'Invalid scope' });
+
+  const admin = await prisma.admin.findUnique({ where: { username } });
+
+  if (!admin.verificationCode || admin.verificationCode !== code) {
+    return res.status(400).json({ error: 'Código inválido' });
+  }
+
+  if (new Date() > admin.verificationCodeExpiresAt) {
+    return res.status(400).json({ error: 'El código ha expirado' });
+  }
+
+  // Clear code
+  await prisma.admin.update({
+    where: { username },
+    data: { verificationCode: null, verificationCodeExpiresAt: null }
+  });
+
+  // Issue full token
+  const token = jwt.sign({ username: admin.username, scope: 'full' }, SECRET_KEY, { expiresIn: '8h' });
   res.json({ token });
 });
+
 
 // Routes
 // Get all services
