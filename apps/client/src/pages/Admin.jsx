@@ -36,6 +36,8 @@ import {
   Phone,
   Instagram,
 } from "lucide-react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import clsx from "clsx";
 
 export default function Admin() {
@@ -76,6 +78,7 @@ export default function Admin() {
   const [configAboutImage, setConfigAboutImage] = useState(null);
   const [caseImageBefore, setCaseImageBefore] = useState(null);
   const [caseImageAfter, setCaseImageAfter] = useState(null);
+  const [caseDescription, setCaseDescription] = useState("");
 
   // Modals & Current Items
   const [servicesLoading, setServicesLoading] = useState(false);
@@ -535,6 +538,7 @@ export default function Admin() {
       // Use state for images
       data.imageBefore = caseImageBefore;
       data.imageAfter = caseImageAfter;
+      data.description = caseDescription;
 
       const url = currentCase
         ? `/api/success-cases/${currentCase.id}`
@@ -584,6 +588,7 @@ export default function Admin() {
     setCurrentCase(item);
     setCaseImageBefore(item?.imageBefore || null);
     setCaseImageAfter(item?.imageAfter || null);
+    setCaseDescription(item?.description || "");
     setIsCaseModalOpen(true);
     setError(null);
   };
@@ -1166,7 +1171,7 @@ export default function Admin() {
                         {item.title}
                       </h3>
                       <p className="text-sm text-primary/70 mb-4 line-clamp-3 flex-1">
-                        {item.description}
+                        {item.description?.replace(/<[^>]+>/g, "")}
                       </p>
                       <div className="flex justify-end gap-2 pt-2 border-t border-primary/5">
                         <button
@@ -1672,13 +1677,21 @@ export default function Admin() {
                     <label className="block text-sm font-bold text-primary/80 mb-1">
                       Descripción
                     </label>
-                    <textarea
-                      name="description"
-                      defaultValue={currentCase?.description}
-                      rows="10"
-                      required
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none resize-none"
-                    ></textarea>
+                    <div className="bg-white rounded-lg overflow-hidden">
+                      <ReactQuill
+                        theme="snow"
+                        value={caseDescription}
+                        onChange={setCaseDescription}
+                        modules={{
+                          toolbar: [
+                            ["bold", "italic", "underline"],
+                            [{ list: "ordered" }, { list: "bullet" }],
+                            ["link"],
+                          ],
+                        }}
+                        className="h-64 mb-10"
+                      />
+                    </div>
                   </div>
                 </div>
 

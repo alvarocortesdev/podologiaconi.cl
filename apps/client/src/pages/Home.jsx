@@ -312,9 +312,10 @@ export default function Home() {
               <h3 className="text-2xl sm:text-3xl font-display font-bold text-primary mb-3">
                 {selectedCase.title}
               </h3>
-              <p className="text-primary/70 text-base sm:text-lg leading-relaxed">
-                {selectedCase.description}
-              </p>
+              <div
+                className="text-primary/70 text-base sm:text-lg leading-relaxed prose prose-primary max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2"
+                dangerouslySetInnerHTML={{ __html: selectedCase.description }}
+              />
             </div>
           </div>
         </div>
