@@ -670,7 +670,10 @@ export default function Admin() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Failed to save order");
+          console.error("Reorder error data:", errorData);
+          throw new Error(
+            errorData.details || errorData.error || "Failed to save order",
+          );
         }
       } catch (err) {
         console.error("Error updating order:", err);
