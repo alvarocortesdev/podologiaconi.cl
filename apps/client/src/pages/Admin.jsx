@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ImageUpload from "../components/ImageUpload";
 import {
   Lock,
   Plus,
@@ -52,6 +53,11 @@ export default function Admin() {
   const [siteConfig, setSiteConfig] = useState(null);
   const [successCases, setSuccessCases] = useState([]);
 
+  // Image States for Forms
+  const [configAboutImage, setConfigAboutImage] = useState(null);
+  const [caseImageBefore, setCaseImageBefore] = useState(null);
+  const [caseImageAfter, setCaseImageAfter] = useState(null);
+
   // Modals & Current Items
   const [servicesLoading, setServicesLoading] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
@@ -70,6 +76,12 @@ export default function Admin() {
       fetchAllData();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (siteConfig?.aboutImage) {
+      setConfigAboutImage(siteConfig.aboutImage);
+    }
+  }, [siteConfig]);
 
   const fetchAllData = () => {
     fetchServices();
@@ -439,6 +451,17 @@ export default function Admin() {
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
 
+      // Use state for image if set (or null if removed)
+      // Note: If configAboutImage is null but siteConfig.aboutImage exists,
+      // we need to know if the user explicitly removed it or just didn't touch it.
+      // But we initialize configAboutImage with siteConfig.aboutImage.
+      // So if configAboutImage is null, it means it was removed or never existed.
+      // However, if the component wasn't touched, configAboutImage might not have triggered onChange?
+      // No, we set it in useEffect. So configAboutImage IS the source of truth.
+      if (configAboutImage !== undefined) {
+        data.aboutImage = configAboutImage;
+      }
+
       const response = await fetch("/api/config", {
         method: "PUT",
         headers: {
@@ -468,6 +491,10 @@ export default function Admin() {
     try {
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
+
+      // Use state for images
+      data.imageBefore = caseImageBefore;
+      data.imageAfter = caseImageAfter;
 
       const url = currentCase
         ? `/api/success-cases/${currentCase.id}`
@@ -515,6 +542,8 @@ export default function Admin() {
 
   const openCaseModal = (item = null) => {
     setCurrentCase(item);
+    setCaseImageBefore(item?.imageBefore || null);
+    setCaseImageAfter(item?.imageAfter || null);
     setIsCaseModalOpen(true);
     setError(null);
   };
@@ -1455,22 +1484,22 @@ export default function Admin() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-primary/80 mb-1">
-                  URL Imagen Antes
+                  Imagen Antes
                 </label>
-                <input
-                  name="imageBefore"
-                  defaultValue={currentCase?.imageBefore}
-                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                <ImageUpload
+                  value={caseImageBefore}
+                  onChange={setCaseImageBefore}
+                  label="Cargar Imagen Antes"
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-primary/80 mb-1">
-                  URL Imagen Después
+                  Imagen Después
                 </label>
-                <input
-                  name="imageAfter"
-                  defaultValue={currentCase?.imageAfter}
-                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                <ImageUpload
+                  value={caseImageAfter}
+                  onChange={setCaseImageAfter}
+                  label="Cargar Imagen Después"
                 />
               </div>
               <div className="pt-4 flex justify-end gap-3">
