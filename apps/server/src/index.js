@@ -127,8 +127,10 @@ app.post('/api/quote', async (req, res) => {
     }
 
     // Send email via Resend
-    const fromAddress = process.env.MAIL_FROM || 'Cotización Web <contacto@podologiaconi.cl>';
-    const toAddresses = process.env.MAIL_TO ? process.env.MAIL_TO.split(',') : ['podologiaconi@outlook.com', 'constanza.cortes9@gmail.com'];
+    const fromAddress = process.env.MAIL_FROM || 'onboarding@resend.dev';
+    const toAddresses = process.env.MAIL_TO 
+      ? process.env.MAIL_TO.split(',').map(email => email.trim()) 
+      : ['delivered@resend.dev'];
     
     const { data, error } = await resend.emails.send({
       from: fromAddress,
