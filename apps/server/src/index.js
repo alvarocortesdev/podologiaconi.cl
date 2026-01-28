@@ -7,12 +7,60 @@ const crypto = require('crypto');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
 
 dotenv.config();
 
 const app = express();
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SECRET_KEY = process.env.SECRET_KEY || 'supersecretkey';
+
+// Cloudinary Config (auto-loads from CLOUDINARY_URL)
+// We only need to ensure secure URLs
+cloudinary.config({
+  secure: true
+});
+
+// Multer config (memory storage)
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+// Helper to extract public_id from Cloudinary URL
+const getPublicIdFromUrl = (url) => {
+  if (!url || !url.includes('cloudinary.com')) return null;
+  try {
+    // Example: https://res.cloudinary.com/cloudname/image/upload/v1234567890/podologiaconi/image.jpg
+    const parts = url.split('/');
+    const filename = parts[parts.length - 1];
+    const publicIdWithExt = filename.split('.')[0];
+    const folder = parts[parts.length - 2];
+
+    // Check if folder is part of public_id (usually is for structured folders)
+    // If the URL has the folder 'podologiaconi', we want 'podologiaconi/filename'
+    if (folder === 'podologiaconi') {
+      return `${folder}/${publicIdWithExt}`;
+    }
+    return publicIdWithExt;
+  } catch (e) {
+    console.error('Error parsing Cloudinary URL:', e);
+    return null;
+  }
+};
+
+// Helper to delete image from Cloudinary
+const deleteCloudinaryImage = async (url) => {
+  const publicId = getPublicIdFromUrl(url);
+  if (publicId) {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+      console.log(`Deleted Cloudinary image: ${publicId}`);
+    } catch (error) {
+      console.error(`Failed to delete Cloudinary image ${publicId}:`, error);
+    }
+  }
+};
+
 
 // Helper to generate 8 char alphanumeric code
 const generateCode = () => {
@@ -58,7 +106,7 @@ app.post('/api/login', async (req, res) => {
 
   await prisma.admin.update({
     where: { username },
-    data: { 
+    data: {
       verificationCode: code,
       verificationCodeExpiresAt: expiresAt
     }
@@ -96,7 +144,7 @@ app.post('/api/auth/send-code', authenticateToken, async (req, res) => {
 
   await prisma.admin.update({
     where: { username },
-    data: { 
+    data: {
       verificationCode: code,
       verificationCodeExpiresAt: expiresAt
     }
@@ -261,10 +309,10 @@ app.post('/api/quote', async (req, res) => {
 
     // Send email via Resend
     const fromAddress = process.env.MAIL_FROM || 'onboarding@resend.dev';
-    const toAddresses = process.env.MAIL_TO 
-      ? process.env.MAIL_TO.split(',').map(email => email.trim()) 
+    const toAddresses = process.env.MAIL_TO
+      ? process.env.MAIL_TO.split(',').map(email => email.trim())
       : ['delivered@resend.dev'];
-    
+
     const { data, error } = await resend.emails.send({
       from: fromAddress,
       to: toAddresses,
@@ -301,7 +349,14 @@ app.put('/api/config', authenticateToken, async (req, res) => {
     // Remove id/updatedAt if present
     delete data.id;
     delete data.updatedAt;
-    
+
+    // Fetch current config to check for image changes
+    const currentConfig = await prisma.siteConfig.findUnique({ where: { id: 1 } });
+
+    if (currentConfig && currentConfig.aboutImage && data.aboutImage && currentConfig.aboutImage !== data.aboutImage) {
+      await deleteCloudinaryImage(currentConfig.aboutImage);
+    }
+
     const config = await prisma.siteConfig.upsert({
       where: { id: 1 },
       update: data,
@@ -342,6 +397,19 @@ app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, imageBefore, imageAfter } = req.body;
+
+    // Fetch current case to check for image changes
+    const currentCase = await prisma.successCase.findUnique({ where: { id: parseInt(id) } });
+
+    if (currentCase) {
+      if (currentCase.imageBefore && imageBefore && currentCase.imageBefore !== imageBefore) {
+        await deleteCloudinaryImage(currentCase.imageBefore);
+      }
+      if (currentCase.imageAfter && imageAfter && currentCase.imageAfter !== imageAfter) {
+        await deleteCloudinaryImage(currentCase.imageAfter);
+      }
+    }
+
     const updatedCase = await prisma.successCase.update({
       where: { id: parseInt(id) },
       data: { title, description, imageBefore, imageAfter }
@@ -356,10 +424,66 @@ app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
 app.delete('/api/success-cases/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.successCase.delete({ where: { id: parseInt(id) } });
-    res.json({ message: 'Success case deleted' });
+    const caseItem = await prisma.successCase.findUnique({ where: { id: parseInt(id) } });
+
+    if (caseItem) {
+      // Delete images from Cloudinary
+      if (caseItem.imageBefore) await deleteCloudinaryImage(caseItem.imageBefore);
+      if (caseItem.imageAfter) await deleteCloudinaryImage(caseItem.imageAfter);
+
+      await prisma.successCase.delete({ where: { id: parseInt(id) } });
+      res.json({ message: 'Success case deleted' });
+    } else {
+      res.status(404).json({ error: 'Case not found' });
+    }
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Error deleting success case' });
+  }
+});
+
+// Upload Image to Cloudinary
+app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  try {
+    // Convert buffer to base64
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: 'podologiaconi',
+      resource_type: 'auto'
+    });
+
+    res.json({
+      url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    res.status(500).json({ error: 'Error uploading image' });
+  }
+});
+
+// Delete Image from Cloudinary (Manual)
+app.post('/api/upload/delete', authenticateToken, async (req, res) => {
+  const { public_id, url } = req.body;
+
+  // Allow passing url or public_id
+  let idToDelete = public_id;
+  if (!idToDelete && url) {
+    idToDelete = getPublicIdFromUrl(url);
+  }
+
+  if (!idToDelete) return res.status(400).json({ error: 'No public_id or valid url provided' });
+
+  try {
+    await cloudinary.uploader.destroy(idToDelete);
+    res.json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Cloudinary delete error:', error);
+    res.status(500).json({ error: 'Error deleting image' });
   }
 });
 
@@ -369,10 +493,10 @@ app.put('/api/admin/profile/password', authenticateToken, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const { username } = req.user;
     const admin = await prisma.admin.findUnique({ where: { username } });
-    
+
     const valid = await bcrypt.compare(currentPassword, admin.password);
     if (!valid) return res.status(400).json({ error: 'Contraseña actual incorrecta' });
-    
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.admin.update({ where: { username }, data: { password: hashedPassword } });
     res.json({ message: 'Contraseña actualizada correctamente' });
@@ -387,11 +511,11 @@ app.post('/api/admin/profile/email-request', authenticateToken, async (req, res)
   try {
     const { newEmail } = req.body;
     const { username } = req.user;
-    
+
     // Generate code
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
-    
+
     await prisma.admin.update({
       where: { username },
       data: {
@@ -400,7 +524,7 @@ app.post('/api/admin/profile/email-request', authenticateToken, async (req, res)
         verificationCodeExpiresAt: expiresAt
       }
     });
-    
+
     // Send email
     await resend.emails.send({
       from: 'noreply@podologiaconi.cl',
@@ -408,7 +532,7 @@ app.post('/api/admin/profile/email-request', authenticateToken, async (req, res)
       subject: 'Código de Verificación - Cambio de Correo',
       text: `Tu código de validación para cambiar tu correo es: ${code}\n\nEste código expira en 5 minutos.`,
     });
-    
+
     res.json({ message: 'Código de verificación enviado al nuevo correo' });
   } catch (err) {
     console.error(err);
@@ -421,21 +545,21 @@ app.post('/api/admin/profile/email-confirm', authenticateToken, async (req, res)
   try {
     const { code } = req.body;
     const { username } = req.user;
-    
+
     const admin = await prisma.admin.findUnique({ where: { username } });
-    
+
     if (!admin.verificationCode || admin.verificationCode !== code) {
       return res.status(400).json({ error: 'Código inválido' });
     }
-    
+
     if (new Date() > admin.verificationCodeExpiresAt) {
       return res.status(400).json({ error: 'El código ha expirado' });
     }
-    
+
     if (!admin.pendingEmail) {
       return res.status(400).json({ error: 'No hay cambio de correo pendiente' });
     }
-    
+
     await prisma.admin.update({
       where: { username },
       data: {
@@ -445,7 +569,7 @@ app.post('/api/admin/profile/email-confirm', authenticateToken, async (req, res)
         verificationCodeExpiresAt: null
       }
     });
-    
+
     res.json({ message: 'Correo actualizado correctamente' });
   } catch (err) {
     console.error(err);
