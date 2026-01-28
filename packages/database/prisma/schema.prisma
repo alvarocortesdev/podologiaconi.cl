@@ -49,6 +49,7 @@ model SiteConfig {
   whatsapp    String?
 
   // Hero Section
+  heroTagline    String   @default("Atención Podológica Profesional")
   heroTitle      String   @default("Podología Clínica Integral")
   heroSubtitle   String   @default("Recupera la salud y belleza de tus pies con atención profesional personalizada.")
   heroButtonText String   @default("Agenda tu Hora")
@@ -58,6 +59,20 @@ model SiteConfig {
   aboutText      String   @default("Podóloga clínica certificada con experiencia en el tratamiento de diversas patologías del pie. Mi compromiso es brindar una atención de calidad, segura y empática.")
   aboutImage     String?
 
+  aboutCards     AboutCard[]
+
+  updatedAt   DateTime @updatedAt
+}
+
+model AboutCard {
+  id          Int      @id @default(autoincrement())
+  title       String
+  subtitle    String?  // e.g. Organization
+  details     String?  // e.g. Year
+  order       Int      @default(0)
+  siteConfigId Int     @default(1)
+  siteConfig   SiteConfig @relation(fields: [siteConfigId], references: [id])
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 

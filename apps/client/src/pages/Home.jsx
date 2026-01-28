@@ -8,13 +8,39 @@ import clsx from "clsx";
 
 export default function Home() {
   const { introStep } = React.useContext(IntroContext);
-  const { config, successCases } = useConfig();
+  const { config, successCases, aboutCards } = useConfig();
 
   const defaultCases = [
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso1_x0zqpj.jpg",
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso2_zzp3k2.jpg",
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso3_sthwhb.jpg",
   ];
+
+  const defaultAboutCards = [
+    {
+      title: "Técnico Nivel Superior",
+      subtitle: "Instituto AIEP",
+      details: "2018-2020",
+    },
+    {
+      title: "Diplomado Pie Diabético",
+      subtitle: "Universidad de Chile",
+      details: "2021",
+    },
+    {
+      title: "Cert. en Ortoplasia",
+      subtitle: "Centro Clínico del Pie",
+      details: "2022",
+    },
+    {
+      title: "Registro SIS N°458921",
+      subtitle: "Superintendencia de Salud",
+      details: "Vigente",
+    },
+  ];
+
+  const displayAboutCards =
+    aboutCards && aboutCards.length > 0 ? aboutCards : defaultAboutCards;
 
   return (
     <div className="pb-16 sm:pb-24">
@@ -33,7 +59,7 @@ export default function Home() {
             {/* Text Content */}
             <div className="text-center lg:text-left z-10">
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-primary">
-                Atención Podológica Profesional
+                {config?.heroTagline || "Atención Podológica Profesional"}
               </span>
               <h1 className="text-3xl sm:text-4xl lg:text-6xl font-display font-bold text-primary mt-4 sm:mt-5 mb-4 sm:mb-6 leading-tight">
                 {config?.heroTitle || (
@@ -165,40 +191,19 @@ export default function Home() {
             )}
           </div>
           <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: "Técnico Nivel Superior",
-                org: "Instituto AIEP",
-                year: "2018-2020",
-              },
-              {
-                title: "Diplomado Pie Diabético",
-                org: "Universidad de Chile",
-                year: "2021",
-              },
-              {
-                title: "Cert. en Ortoplasia",
-                org: "Centro Clínico del Pie",
-                year: "2022",
-              },
-              {
-                title: "Registro SIS N°458921",
-                org: "Superintendencia de Salud",
-                year: "Vigente",
-              },
-            ].map((item) => (
+            {displayAboutCards.map((item) => (
               <div
-                key={item.title}
+                key={item.id || item.title}
                 className="bg-primary/5 border-l-4 border-secondary p-5 sm:p-6 rounded-r-lg"
               >
                 <h3 className="text-base sm:text-lg font-bold text-primary">
                   {item.title}
                 </h3>
                 <p className="text-sm sm:text-md text-primary/80 font-medium">
-                  {item.org}
+                  {item.subtitle || item.org}
                 </p>
                 <p className="text-xs sm:text-sm text-primary/60 mt-2">
-                  {item.year}
+                  {item.details || item.year}
                 </p>
               </div>
             ))}
