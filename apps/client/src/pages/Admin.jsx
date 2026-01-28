@@ -1196,10 +1196,65 @@ export default function Admin() {
               )}
 
               <form onSubmit={handleSaveConfig} className="space-y-8">
+                {/* Hero Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <Layout size={20} /> Sección Principal (Hero)
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Etiqueta (Tagline)
+                      </label>
+                      <input
+                        name="heroTagline"
+                        defaultValue={siteConfig?.heroTagline}
+                        placeholder="Ej: Atención Podológica Profesional"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Título Principal
+                      </label>
+                      <input
+                        name="heroTitle"
+                        defaultValue={siteConfig?.heroTitle}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Subtítulo
+                      </label>
+                      <textarea
+                        name="heroSubtitle"
+                        defaultValue={siteConfig?.heroSubtitle}
+                        rows="2"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avatar Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <User size={20} /> Sección Avatar
+                  </h3>
+                  <div>
+                    <ImageUpload
+                      value={configAboutImage}
+                      onChange={setConfigAboutImage}
+                      label="Imagen de Perfil (Avatar)"
+                    />
+                  </div>
+                </div>
+
                 {/* About Section */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
                   <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                    <FileText size={20} /> Sección Sobre Mí
+                    <FileText size={20} /> Sección Mi Perfil
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -1228,7 +1283,7 @@ export default function Admin() {
                     <div className="mt-6">
                       <div className="flex justify-between items-center mb-3">
                         <label className="block text-sm font-bold text-primary/80">
-                          Tarjetas Informativas
+                          Tarjetas Perfil
                         </label>
                         <button
                           type="button"
@@ -1268,61 +1323,6 @@ export default function Admin() {
                           </DndContext>
                         )}
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Avatar Section */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                    <User size={20} /> Sección Avatar
-                  </h3>
-                  <div>
-                    <ImageUpload
-                      value={configAboutImage}
-                      onChange={setConfigAboutImage}
-                      label="Imagen de Perfil (Avatar)"
-                    />
-                  </div>
-                </div>
-
-                {/* Hero Section */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                    <Layout size={20} /> Sección Principal (Hero)
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Etiqueta (Tagline)
-                      </label>
-                      <input
-                        name="heroTagline"
-                        defaultValue={siteConfig?.heroTagline}
-                        placeholder="Ej: Atención Podológica Profesional"
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Título Principal
-                      </label>
-                      <input
-                        name="heroTitle"
-                        defaultValue={siteConfig?.heroTitle}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Subtítulo
-                      </label>
-                      <textarea
-                        name="heroSubtitle"
-                        defaultValue={siteConfig?.heroSubtitle}
-                        rows="2"
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
                     </div>
                   </div>
                 </div>
