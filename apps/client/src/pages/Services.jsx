@@ -12,6 +12,52 @@ import SkeletonCard from "../components/SkeletonCard";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Fallback mock data in case API fails
+const mockServices = [
+  {
+    id: 1,
+    name: "Atención Podológica General",
+    description:
+      "Incluye corte y pulido de uñas, eliminación de durezas y masaje podal.",
+    category: "Clínico",
+  },
+  {
+    id: 2,
+    name: "Tratamiento de Onicocriptosis",
+    description:
+      "Manejo especializado de uña encarnada para aliviar el dolor y prevenir infecciones.",
+    category: "Clínico",
+  },
+  {
+    id: 3,
+    name: "Podología Geriátrica",
+    description:
+      "Cuidado especializado para pies de adultos mayores, enfocado en movilidad y confort.",
+    category: "Clínico",
+  },
+  {
+    id: 4,
+    name: "Reflexología Podal",
+    description:
+      "Terapia de masajes en puntos reflejos del pie para promover el bienestar general.",
+    category: "Bienestar",
+  },
+  {
+    id: 5,
+    name: "Esmaltado Permanente",
+    description:
+      "Luce uñas perfectas por más tiempo con nuestra técnica de esmaltado de larga duración.",
+    category: "Estético",
+  },
+  {
+    id: 6,
+    name: "Ortesis de Silicona",
+    description:
+      "Dispositivos personalizados para corregir deformidades y aliviar la presión en los dedos.",
+    category: "Ortopedia",
+  },
+];
+
 export default function Services() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,58 +67,6 @@ export default function Services() {
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
   const [sending, setSending] = useState(false);
   const [quoteError, setQuoteError] = useState(null);
-
-  // Fallback mock data in case API fails
-  const mockServices = [
-    {
-      id: 1,
-      name: "Atención Podológica General",
-      description:
-        "Incluye corte y pulido de uñas, eliminación de durezas y masaje podal.",
-      price: 25000,
-      category: "Clínico",
-    },
-    {
-      id: 2,
-      name: "Tratamiento de Onicocriptosis",
-      description:
-        "Manejo especializado de uña encarnada para aliviar el dolor y prevenir infecciones.",
-      price: 30000,
-      category: "Clínico",
-    },
-    {
-      id: 3,
-      name: "Podología Geriátrica",
-      description:
-        "Cuidado especializado para pies de adultos mayores, enfocado en movilidad y confort.",
-      price: 28000,
-      category: "Clínico",
-    },
-    {
-      id: 4,
-      name: "Reflexología Podal",
-      description:
-        "Terapia de masajes en puntos reflejos del pie para promover el bienestar general.",
-      price: 35000,
-      category: "Bienestar",
-    },
-    {
-      id: 5,
-      name: "Esmaltado Permanente",
-      description:
-        "Luce uñas perfectas por más tiempo con nuestra técnica de esmaltado de larga duración.",
-      price: 15000,
-      category: "Estético",
-    },
-    {
-      id: 6,
-      name: "Ortesis de Silicona",
-      description:
-        "Dispositivos personalizados para corregir deformidades y aliviar la presión en los dedos.",
-      price: 40000,
-      category: "Ortopedia",
-    },
-  ];
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -104,7 +98,7 @@ export default function Services() {
     };
 
     fetchServices();
-  }, [mockServices]);
+  }, []);
 
   const categories = ["Todos", ...new Set(services.map((s) => s.category))];
 
