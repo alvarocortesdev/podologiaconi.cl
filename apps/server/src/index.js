@@ -112,12 +112,24 @@ app.delete('/api/services/:id', authenticateToken, async (req, res) => {
 app.post('/api/quote', async (req, res) => {
   try {
     const { name, email, phone, services } = req.body;
-    const serviceList = services.map(s => `- ${s.name}`).join('\n');
+    const serviceList = Array.isArray(services) ? services.map(s => `- ${s.name}`).join('\n') : '';
     const emailLine = email ? `Email: ${email}\n` : '';
 
+    // Persist contact (create or ignore if exists)
+    try {
+      await prisma.contact.upsert({
+        where: { phone },
+        update: { name, email },
+        create: { name, email, phone },
+      });
+    } catch (e) {
+      // ignore prisma errors for contact to not block email
+    }
+
+    // Send email via Resend
     const { data, error } = await resend.emails.send({
-      from: 'Podología Coni <onboarding@resend.dev>',
-      to: ['alvarocortesdev@gmail.com'], // Replace with admin email
+      from: 'Podología Coni <contacto@podologiaconi.cl>',
+      to: ['podologiaconi@outlook.com', 'constanza.cortes9@gmail.com'],
       subject: `Nueva Cotización de ${name}`,
       text: `Nombre: ${name}\n${emailLine}Teléfono: ${phone}\n\nServicios Seleccionados:\n${serviceList}`,
     });
