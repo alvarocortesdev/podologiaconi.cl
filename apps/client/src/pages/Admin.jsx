@@ -1171,7 +1171,11 @@ export default function Admin() {
                         {item.title}
                       </h3>
                       <p className="text-sm text-primary/70 mb-4 line-clamp-3 flex-1">
-                        {item.description?.replace(/<[^>]+>/g, "")}
+                        {item.description
+                          ?.replace(/<[^>]+>/g, " ")
+                          .replace(/&nbsp;/g, " ")
+                          .replace(/\s+/g, " ")
+                          .trim()}
                       </p>
                       <div className="flex justify-end gap-2 pt-2 border-t border-primary/5">
                         <button
