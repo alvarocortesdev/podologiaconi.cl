@@ -6,6 +6,7 @@ import clsx from 'clsx';
 export default function Services() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [selectedServices, setSelectedServices] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -13,18 +14,48 @@ export default function Services() {
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Fallback mock data in case API fails
+  const mockServices = [
+    { id: 1, name: 'Atención Podológica General', description: 'Incluye corte y pulido de uñas, eliminación de durezas y masaje podal.', price: 25000, category: 'Clínico' },
+    { id: 2, name: 'Tratamiento de Onicocriptosis', description: 'Manejo especializado de uña encarnada para aliviar el dolor y prevenir infecciones.', price: 30000, category: 'Clínico' },
+    { id: 3, name: 'Podología Geriátrica', description: 'Cuidado especializado para pies de adultos mayores, enfocado en movilidad y confort.', price: 28000, category: 'Clínico' },
+    { id: 4, name: 'Reflexología Podal', description: 'Terapia de masajes en puntos reflejos del pie para promover el bienestar general.', price: 35000, category: 'Bienestar' },
+    { id: 5, name: 'Esmaltado Permanente', description: 'Luce uñas perfectas por más tiempo con nuestra técnica de esmaltado de larga duración.', price: 15000, category: 'Estético' },
+    { id: 6, name: 'Ortesis de Silicona', description: 'Dispositivos personalizados para corregir deformidades y aliviar la presión en los dedos.', price: 40000, category: 'Ortopedia' },
+  ];
+
   useEffect(() => {
-    // Mock data for demonstration
-    const mockServices = [
-      { id: 1, name: 'Atención Podológica General', description: 'Incluye corte y pulido de uñas, eliminación de durezas y masaje podal.', price: 25000, category: 'Clínico' },
-      { id: 2, name: 'Tratamiento de Onicocriptosis', description: 'Manejo especializado de uña encarnada para aliviar el dolor y prevenir infecciones.', price: 30000, category: 'Clínico' },
-      { id: 3, name: 'Podología Geriátrica', description: 'Cuidado especializado para pies de adultos mayores, enfocado en movilidad y confort.', price: 28000, category: 'Clínico' },
-      { id: 4, name: 'Reflexología Podal', description: 'Terapia de masajes en puntos reflejos del pie para promover el bienestar general.', price: 35000, category: 'Bienestar' },
-      { id: 5, name: 'Esmaltado Permanente', description: 'Luce uñas perfectas por más tiempo con nuestra técnica de esmaltado de larga duración.', price: 15000, category: 'Estético' },
-      { id: 6, name: 'Ortesis de Silicona', description: 'Dispositivos personalizados para corregir deformidades y aliviar la presión en los dedos.', price: 40000, category: 'Ortopedia' },
-    ];
-    setServices(mockServices);
-    setLoading(false);
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/services');
+        
+        if (!response.ok) {
+          throw new Error(`Error al cargar servicios: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Validate that we received an array
+        if (Array.isArray(data) && data.length > 0) {
+          setServices(data);
+        } else {
+          // If API returns empty array or invalid data, use fallback
+          console.warn('API returned empty or invalid data, using fallback');
+          setServices(mockServices);
+        }
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError(err.message);
+        // Use fallback mock data if API fails
+        setServices(mockServices);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
   }, []);
 
   const categories = ['Todos', ...new Set(services.map(s => s.category))];
