@@ -21,9 +21,13 @@ model Service {
 }
 
 model Admin {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  password String
+  id                    Int       @id @default(autoincrement())
+  username              String    @unique
+  password              String
+  email                 String?
+  isSetup               Boolean   @default(false)
+  verificationCode      String?
+  verificationCodeExpiresAt DateTime?
 }
 
 model Contact {
