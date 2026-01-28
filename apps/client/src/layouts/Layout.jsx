@@ -59,14 +59,14 @@ export default function Layout({ children }) {
             </div>
 
             {/* CTA Button */}
-            <div className="hidden md:flex items-center">
+{/*             <div className="hidden md:flex items-center">
               <Link
                 to="/admin"
                 className="inline-flex items-center px-6 py-2.5 text-sm font-bold text-primary bg-secondary rounded-full hover:bg-opacity-90 transition-all shadow-sm"
               >
                 Área Clientes
               </Link>
-            </div>
+            </div> */}
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
@@ -101,12 +101,12 @@ export default function Layout({ children }) {
                 {link.name}
               </Link>
             ))}
-            <Link
+{/*             <Link
               to="/admin"
               className="block w-full text-left mt-2 px-3 py-3 rounded-md text-base font-medium text-primary bg-secondary/20 hover:bg-secondary/30"
             >
               Área Clientes
-            </Link>
+            </Link> */}
           </div>
         </div>
       </nav>
@@ -153,7 +153,13 @@ export default function Layout({ children }) {
                   <Phone size={18} /> <span>+56 9 8961 1241</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Instagram size={18} /> <span>@podologia_coni</span>
+                  <Instagram size={18} /> 
+                  <a
+                  href="https://www.instagram.com/podologia.coni/"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                    <span>@podologia.coni</span>
+                    </a>
                 </li>
               </ul>
             </div>
@@ -163,7 +169,7 @@ export default function Layout({ children }) {
             <p>© {new Date().getFullYear()} Podología Coni. Todos los derechos reservados.</p>
 
             <div className="mt-4 flex flex-col items-center gap-3">
-              <p>Sitio desarrollado por Alvaro Pelu Cortés</p>
+              <p>Sitio desarrollado por Alvaro Pelusa™ Cortés</p>
 
               <div className="flex gap-6">
                 <a
