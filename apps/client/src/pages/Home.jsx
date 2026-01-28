@@ -1,6 +1,6 @@
 // client/src/pages/Home.jsx
 import React from "react";
-import { ArrowRight, CheckCircle, Leaf, Stethoscope } from "lucide-react";
+import { ArrowRight, CheckCircle, Leaf, Stethoscope, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { IntroContext } from "../context/IntroContext";
 import { useConfig } from "../context/ConfigContext";
@@ -41,6 +41,8 @@ export default function Home() {
 
   const displayAboutCards =
     aboutCards && aboutCards.length > 0 ? aboutCards : defaultAboutCards;
+
+  const [selectedCase, setSelectedCase] = React.useState(null);
 
   return (
     <div className="pb-16 sm:pb-24">
@@ -240,26 +242,11 @@ export default function Home() {
                   description: "Ver más",
                 }))
             ).map((item, idx) => (
-              <div
+              <SuccessCaseCard
                 key={item.id || idx}
-                className="group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg"
-              >
-                <img
-                  src={item.imageAfter}
-                  alt={`${item.title} - Tratamiento podológico`}
-                  className="h-64 sm:h-80 w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-4 sm:p-6">
-                  <h3 className="text-white text-lg sm:text-xl font-bold">
-                    {item.title}
-                  </h3>
-                  <p className="text-secondary font-semibold text-sm sm:text-base">
-                    Ver más
-                  </p>
-                </div>
-              </div>
+                item={item}
+                onClick={() => setSelectedCase(item)}
+              />
             ))}
           </div>
           <p className="text-center text-xs sm:text-sm text-primary/60 mt-6 sm:mt-8 italic px-2">
@@ -267,6 +254,143 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* Success Case Modal */}
+      {selectedCase && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={() => setSelectedCase(null)}
+        >
+          <div
+            className="bg-white rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedCase(null)}
+              className="absolute top-4 right-4 z-20 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors backdrop-blur-md"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="grid grid-cols-2 aspect-[2/1] bg-gray-100 relative">
+              {/* Before Image */}
+              <div className="relative h-full border-r border-white/20 overflow-hidden">
+                {selectedCase.imageBefore ? (
+                  <>
+                    <img
+                      src={selectedCase.imageBefore}
+                      alt="Antes"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
+                    <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
+                      Antes
+                    </span>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                    Sin imagen
+                  </div>
+                )}
+              </div>
+
+              {/* After Image */}
+              <div className="relative h-full overflow-hidden">
+                <img
+                  src={selectedCase.imageAfter}
+                  alt="Después"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
+                <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
+                  Después
+                </span>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <h3 className="text-2xl sm:text-3xl font-display font-bold text-primary mb-3">
+                {selectedCase.title}
+              </h3>
+              <p className="text-primary/70 text-base sm:text-lg leading-relaxed">
+                {selectedCase.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SuccessCaseCard({ item, onClick }) {
+  const [showAfter, setShowAfter] = React.useState(true);
+  const hasBefore = !!item.imageBefore;
+
+  React.useEffect(() => {
+    if (!hasBefore) return;
+    const interval = setInterval(() => {
+      setShowAfter((prev) => !prev);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [hasBefore]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg cursor-pointer transform transition-transform hover:-translate-y-1 hover:shadow-xl"
+    >
+      <div className="relative h-64 sm:h-80 w-full overflow-hidden">
+        {hasBefore && (
+          <img
+            src={item.imageBefore}
+            alt={`${item.title} - Antes`}
+            className={clsx(
+              "absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110",
+              showAfter ? "opacity-0" : "opacity-100",
+            )}
+          />
+        )}
+        <img
+          src={item.imageAfter}
+          alt={`${item.title} - Después`}
+          className={clsx(
+            "absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110",
+            hasBefore
+              ? showAfter
+                ? "opacity-100"
+                : "opacity-0"
+              : "opacity-100",
+          )}
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity"></div>
+      <div className="absolute bottom-0 left-0 p-4 sm:p-6 w-full">
+        <h3 className="text-white text-lg sm:text-xl font-bold mb-1">
+          {item.title}
+        </h3>
+        <div className="flex items-center justify-between">
+          <p className="text-secondary font-semibold text-sm sm:text-base group-hover:text-white transition-colors">
+            Ver más
+          </p>
+          {hasBefore && (
+            <div className="flex gap-1.5">
+              <div
+                className={clsx(
+                  "w-2 h-2 rounded-full transition-colors",
+                  !showAfter ? "bg-secondary" : "bg-white/30",
+                )}
+              />
+              <div
+                className={clsx(
+                  "w-2 h-2 rounded-full transition-colors",
+                  showAfter ? "bg-secondary" : "bg-white/30",
+                )}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
