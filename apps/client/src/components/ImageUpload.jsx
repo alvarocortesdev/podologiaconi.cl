@@ -220,15 +220,18 @@ export default function ImageUpload({ value, onChange, label }) {
                              </button>
                          </div>
                     ) : (
-                        <button
-                            type="button"
-                            onClick={handleUpload}
-                            disabled={uploading}
-                            className="flex-1 py-2 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            {uploading ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />}
-                            {uploading ? "Cargando..." : "Cargar"}
-                        </button>
+                        <div className="w-full flex items-center justify-center py-4">
+                            {uploading ? (
+                                <div className="flex items-center gap-2 text-primary">
+                                    <Loader2 className="animate-spin" size={20} />
+                                    <span className="font-medium">Subiendo imagen...</span>
+                                </div>
+                            ) : (
+                                <span className="text-green-600 font-medium flex items-center gap-2">
+                                    <Check size={20} /> ¡Lista para guardar!
+                                </span>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
