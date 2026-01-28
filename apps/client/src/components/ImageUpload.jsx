@@ -34,7 +34,7 @@ const ASPECT_GROUPS = [
     { label: "3:4", value: 3 / 4 },
     { label: "2:3", value: 2 / 3 },
   ],
-  [{ label: "Libre", value: null }],
+  [{ label: "Libre", value: undefined }],
 ];
 
 export default function ImageUpload({ value, onChange, label }) {
@@ -51,6 +51,7 @@ export default function ImageUpload({ value, onChange, label }) {
   // Auto-upload when fileToUpload changes
   useEffect(() => {
     if (fileToUpload) {
+      console.log("Triggering auto-upload for file:", fileToUpload);
       handleUpload();
     }
   }, [fileToUpload]);
@@ -91,11 +92,13 @@ export default function ImageUpload({ value, onChange, label }) {
 
   const handleCropConfirm = async () => {
     try {
+      console.log("Starting crop confirm...");
       const croppedImageBlob = await getCroppedImg(
         imageSrc,
         croppedAreaPixels,
         0,
       );
+      console.log("Image cropped successfully:", croppedImageBlob);
 
       const preview = URL.createObjectURL(croppedImageBlob);
       setPreviewUrl(preview);
@@ -103,7 +106,7 @@ export default function ImageUpload({ value, onChange, label }) {
       setFileToUpload(croppedImageBlob);
       setIsCropping(false);
     } catch (e) {
-      console.error(e);
+      console.error("Error during crop:", e);
       alert("Error al recortar la imagen");
     }
   };
@@ -111,12 +114,14 @@ export default function ImageUpload({ value, onChange, label }) {
   const handleUpload = async () => {
     if (!fileToUpload) return;
 
+    console.log("Starting upload...");
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", fileToUpload, "upload.jpg");
 
       const token = localStorage.getItem("token");
+      console.log("Sending request to /api/upload...");
       const response = await fetch("/api/upload", {
         method: "POST",
         headers: {
@@ -125,16 +130,22 @@ export default function ImageUpload({ value, onChange, label }) {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Error al subir imagen");
+      console.log("Response status:", response.status);
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Error al subir imagen: ${response.status} ${errText}`);
+      }
 
       const data = await response.json();
+      console.log("Upload success, data:", data);
       onChange(data.url);
       setPreviewUrl(null);
       setFileToUpload(null);
       setImageSrc(null);
     } catch (error) {
-      console.error(error);
-      alert("Error al subir la imagen");
+      console.error("Upload error:", error);
+      alert("Error al subir la imagen: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -289,7 +300,7 @@ export default function ImageUpload({ value, onChange, label }) {
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
-                aspect={aspect}
+                {...(aspect ? { aspect } : {})}
                 onCropChange={setCrop}
                 onCropComplete={onCropComplete}
                 onZoomChange={setZoom}
