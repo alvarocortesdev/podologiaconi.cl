@@ -2,7 +2,7 @@
 import React from "react";
 import { ArrowRight, CheckCircle, Leaf, Stethoscope } from "lucide-react";
 import { Link } from "react-router-dom";
-import { IntroContext } from '../context/IntroContext';
+import { IntroContext } from "../context/IntroContext";
 import clsx from "clsx";
 
 export default function Home() {
@@ -65,7 +65,7 @@ export default function Home() {
               <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-[480px] lg:h-[480px] bg-primary/10 rounded-full p-3 sm:p-4">
                 <div className="w-full h-full rounded-full overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
                   <img
-                    src="https://res.cloudinary.com/peluimages/image/upload/v1769562964/avatar_zi9gw0.jpg"
+                    src="https://res.cloudinary.com/peluimages/image/upload/v1769608569/avatar_mdrkl6.png"
                     alt="Podóloga Coni - Especialista en cuidado podológico integral"
                     className="w-full h-full object-cover"
                     loading="lazy"
