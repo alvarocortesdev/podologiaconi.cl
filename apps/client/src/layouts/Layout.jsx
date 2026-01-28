@@ -21,8 +21,7 @@ export default function Layout({ children }) {
 
   const [introStep, setIntroStep] = React.useState(() => {
     if (typeof window !== "undefined") {
-      const hasVisited = localStorage.getItem("hasVisited");
-      if (hasVisited || window.location.pathname !== "/") {
+      if (window.location.pathname !== "/") {
         return 6;
       }
     }
@@ -30,29 +29,28 @@ export default function Layout({ children }) {
   });
 
   React.useEffect(() => {
-    const hasVisited = localStorage.getItem("hasVisited");
     const isHome = location.pathname === "/";
 
-    if (!hasVisited) {
-      localStorage.setItem("hasVisited", "true");
+    // Only run animation if we started at step 0 (meaning we are on Home and it's a fresh load)
+    if (introStep === 0 && isHome) {
+      setIntroStep(1);
 
-      if (isHome) {
-        setIntroStep(1);
+      const timers = [
+        setTimeout(() => setIntroStep(2), 1000),
+        setTimeout(() => setIntroStep(3), 2000),
+        setTimeout(() => setIntroStep(4), 3000),
+        setTimeout(() => setIntroStep(5), 4000),
+        setTimeout(() => setIntroStep(6), 5000),
+      ];
 
-        const timers = [
-          setTimeout(() => setIntroStep(2), 1000),
-          setTimeout(() => setIntroStep(3), 2000),
-          setTimeout(() => setIntroStep(4), 3000),
-          setTimeout(() => setIntroStep(5), 4000),
-          setTimeout(() => setIntroStep(6), 5000),
-        ];
-
-        return () => timers.forEach(clearTimeout);
-      } else {
-        setIntroStep(6);
-      }
+      return () => timers.forEach(clearTimeout);
+    } else if (!isHome) {
+      // If not home, ensure we are done
+      setIntroStep(6);
     }
-  }, [location.pathname]);
+    // We only want this to run on mount, so we keep dependencies empty or minimal
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const navLinks = [
     { name: "Inicio", path: "/" },
