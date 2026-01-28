@@ -10,7 +10,6 @@ import {
   Globe,
   Linkedin,
   MessageSquare,
-  Facebook,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -289,24 +288,6 @@ export default function Layout({ children }) {
                       >
                         <span>Instagram</span>
                       </a>
-                    </li>
-                  )}
-                  {config?.facebook && (
-                    <li className="flex items-center gap-3">
-                      <Facebook size={18} />
-                      <a
-                        href={config.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-white transition-colors"
-                      >
-                        <span>Facebook</span>
-                      </a>
-                    </li>
-                  )}
-                  {config?.address && (
-                    <li className="flex items-start gap-3 mt-2">
-                      <span>{config.address}</span>
                     </li>
                   )}
                 </ul>
