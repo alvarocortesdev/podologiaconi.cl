@@ -68,6 +68,7 @@ export default function Services() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+  const [phoneCountry, setPhoneCountry] = useState("+56");
   const [sending, setSending] = useState(false);
   const [quoteError, setQuoteError] = useState(null);
 
@@ -137,6 +138,14 @@ export default function Services() {
   };
 
   // const total = selectedServices.reduce((acc, s) => acc + s.price, 0);
+  const formatClPhone = (digits) => {
+    const s = (digits || "").replace(/\D/g, "").slice(0, 9);
+    const part1 = s.slice(0, 1);
+    const part2 = s.slice(1, 5);
+    const part3 = s.slice(5, 9);
+    return [part1, part2, part3].filter(Boolean).join(" ");
+  };
+  const isPhoneValid = (formData.phone || "").replace(/\D/g, "").length === 9;
 
   const handleQuote = async (e) => {
     e.preventDefault();
@@ -144,6 +153,9 @@ export default function Services() {
     setQuoteError(null);
 
     try {
+      if (!isPhoneValid) {
+        throw new Error("El teléfono debe tener 9 dígitos");
+      }
       const response = await fetch("/api/quote", {
         method: "POST",
         headers: {
@@ -152,7 +164,7 @@ export default function Services() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          phone: formData.phone,
+          phone: `${phoneCountry}${(formData.phone || "").replace(/\D/g, "")}`,
           services: selectedServices.map((s) => ({
             name: s.name,
           })),
@@ -356,15 +368,37 @@ export default function Services() {
                         Requerido
                       </span>
                     </label>
-                    <input
-                      required
-                      type="tel"
-                      className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                    />
+                    <div className="flex gap-3">
+                      <select
+                        value={phoneCountry}
+                        onChange={(e) => setPhoneCountry(e.target.value)}
+                        className="px-3 py-2.5 border border-primary/20 rounded-lg bg-white text-primary focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
+                      >
+                        <option value="+56">Chile +56</option>
+                      </select>
+                      <input
+                        required
+                        inputMode="numeric"
+                        type="tel"
+                        className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
+                        value={formatClPhone(formData.phone)}
+                        onChange={(e) => {
+                          const digits = (e.target.value || "")
+                            .replace(/\D/g, "")
+                            .slice(0, 9);
+                          setFormData({ ...formData, phone: digits });
+                        }}
+                        placeholder="9 1234 5678"
+                      />
+                    </div>
+                    <p
+                      className={`mt-1 text-xs ${
+                        isPhoneValid ? "text-primary/60" : "text-red-600"
+                      }`}
+                    >
+                      Formato: 9 1234 5678{" "}
+                      {isPhoneValid ? "" : "(9 dígitos requeridos)"}
+                    </p>
                   </div>
 
                   <div className="bg-primary/5 p-4 rounded-lg mt-4">
@@ -389,7 +423,7 @@ export default function Services() {
 
                   <button
                     type="submit"
-                    disabled={sending}
+                    disabled={sending || !isPhoneValid}
                     className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {sending ? (
