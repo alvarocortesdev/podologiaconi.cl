@@ -1445,8 +1445,8 @@ export default function Admin() {
 
       {/* CASE MODAL */}
       {isCaseModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden my-8">
             <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
               <h2 className="text-xl font-bold font-display">
                 {currentCase ? "Editar Caso" : "Nuevo Caso"}
@@ -1458,51 +1458,55 @@ export default function Admin() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSubmitCase} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">
-                  Título
-                </label>
-                <input
-                  name="title"
-                  defaultValue={currentCase?.title}
-                  required
-                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                />
+            <form onSubmit={handleSubmitCase} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left Column: Info */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Título
+                    </label>
+                    <input
+                      name="title"
+                      defaultValue={currentCase?.title}
+                      required
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Descripción
+                    </label>
+                    <textarea
+                      name="description"
+                      defaultValue={currentCase?.description}
+                      rows="10"
+                      required
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none resize-none"
+                    ></textarea>
+                  </div>
+                </div>
+
+                {/* Right Column: Images */}
+                <div className="space-y-4">
+                  <div>
+                    <ImageUpload
+                      value={caseImageBefore}
+                      onChange={setCaseImageBefore}
+                      label="Imagen Antes"
+                    />
+                  </div>
+                  <div>
+                    <ImageUpload
+                      value={caseImageAfter}
+                      onChange={setCaseImageAfter}
+                      label="Imagen Después"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">
-                  Descripción
-                </label>
-                <textarea
-                  name="description"
-                  defaultValue={currentCase?.description}
-                  rows="3"
-                  required
-                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                ></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">
-                  Imagen Antes
-                </label>
-                <ImageUpload
-                  value={caseImageBefore}
-                  onChange={setCaseImageBefore}
-                  label="Cargar Imagen Antes"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">
-                  Imagen Después
-                </label>
-                <ImageUpload
-                  value={caseImageAfter}
-                  onChange={setCaseImageAfter}
-                  label="Cargar Imagen Después"
-                />
-              </div>
-              <div className="pt-4 flex justify-end gap-3">
+
+              <div className="pt-6 flex justify-end gap-3 border-t mt-6">
                 <button
                   type="button"
                   onClick={() => setIsCaseModalOpen(false)}
