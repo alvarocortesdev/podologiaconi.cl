@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import SkeletonCard from "../components/SkeletonCard";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const SERVICES_CACHE_KEY = "servicesCache";
@@ -71,6 +71,7 @@ export default function Services() {
   const [phoneCountry, setPhoneCountry] = useState("+56");
   const [sending, setSending] = useState(false);
   const [quoteError, setQuoteError] = useState(null);
+  const [quoteSuccess, setQuoteSuccess] = useState(false);
   const SA_COUNTRY_CODES = [
     { label: "Chile +56", value: "+56" },
     { label: "Argentina +54", value: "+54" },
@@ -195,10 +196,8 @@ export default function Services() {
       }
 
       await response.json();
-      toast.success("Cotización Enviada", { position: "bottom-left" });
-      setShowModal(false);
+      setQuoteSuccess(true);
       setSelectedServices([]);
-      setFormData({ name: "", email: "", phone: "" });
       setQuoteError(null);
     } catch (err) {
       console.error("Error sending quote:", err);
@@ -326,131 +325,159 @@ export default function Services() {
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative animate-fade-in-up">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setQuoteError(null);
-                  setFormData({ name: "", email: "", phone: "" });
-                }}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X size={24} />
-              </button>
+              {quoteSuccess ? null : (
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setQuoteError(null);
+                    setFormData({ name: "", email: "", phone: "" });
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              )}
 
               <>
-                <h2 className="text-2xl font-bold text-primary mb-2">
-                  Finalizar Cotización
-                </h2>
-                <p className="text-primary/70 mb-6">
-                  Completa tus datos para enviarte la cotización detallada.
-                </p>
-                <form onSubmit={handleQuote} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-primary/80 mb-1">
-                      Nombre Completo{" "}
-                      <span className="ml-2 text-xs font-bold text-secondary">
-                        Requerido
-                      </span>
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-primary/80 mb-1">
-                      Correo Electrónico
-                    </label>
-                    <input
-                      type="email"
-                      className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-primary/80 mb-1">
-                      Teléfono{" "}
-                      <span className="ml-2 text-xs font-bold text-secondary">
-                        Requerido
-                      </span>
-                    </label>
-                    <div className="flex gap-3">
-                      <select
-                        value={phoneCountry}
-                        onChange={(e) => setPhoneCountry(e.target.value)}
-                        className="px-3 py-2.5 border border-primary/20 rounded-lg bg-white text-primary focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
-                      >
-                        {SA_COUNTRY_CODES.map((c) => (
-                          <option key={c.value} value={c.value}>
-                            {c.label}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        required
-                        inputMode="numeric"
-                        type="tel"
-                        className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
-                        value={formatClPhone(formData.phone)}
-                        onChange={(e) => {
-                          const digits = (e.target.value || "")
-                            .replace(/\D/g, "")
-                            .slice(0, 9);
-                          setFormData({ ...formData, phone: digits });
-                        }}
-                        placeholder="9 1234 5678"
-                      />
-                    </div>
-                    <p
-                      className={`mt-1 text-xs ${
-                        isPhoneValid ? "text-primary/60" : "text-red-600"
-                      }`}
+                {quoteSuccess ? (
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-primary mb-2">
+                      Cotización Enviada!
+                    </h2>
+                    <p className="text-primary/70">
+                      Pronto me contactaré contigo a tus datos de contacto.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowModal(false);
+                        setQuoteSuccess(false);
+                        setFormData({ name: "", email: "", phone: "" });
+                      }}
+                      className="mt-6 px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors"
                     >
-                      Formato: 9 1234 5678{" "}
-                      {isPhoneValid ? "" : "(9 dígitos requeridos)"}
-                    </p>
+                      Cerrar
+                    </button>
                   </div>
-
-                  <div className="bg-primary/5 p-4 rounded-lg mt-4">
-                    <p className="text-sm font-medium text-primary/60 mb-2">
-                      Resumen:
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold text-primary mb-2">
+                      Finalizar Cotización
+                    </h2>
+                    <p className="text-primary/70 mb-6">
+                      Completa tus datos para enviarte la cotización detallada.
                     </p>
-                    <ul className="text-sm text-primary/80 space-y-1 mb-3">
-                      {selectedServices.map((s) => (
-                        <li key={s.id} className="flex">
-                          <span>{s.name}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                    <form onSubmit={handleQuote} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-primary/80 mb-1">
+                          Nombre Completo{" "}
+                          <span className="ml-2 text-xs font-bold text-secondary">
+                            Requerido
+                          </span>
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
+                          value={formData.name}
+                          onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-primary/80 mb-1">
+                          Correo Electrónico
+                        </label>
+                        <input
+                          type="email"
+                          className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-primary/80 mb-1">
+                          Teléfono{" "}
+                          <span className="ml-2 text-xs font-bold text-secondary">
+                            Requerido
+                          </span>
+                        </label>
+                        <div className="flex gap-3">
+                          <select
+                            value={phoneCountry}
+                            onChange={(e) => setPhoneCountry(e.target.value)}
+                            className="px-3 py-2.5 border border-primary/20 rounded-lg bg-white text-primary focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
+                          >
+                            {SA_COUNTRY_CODES.map((c) => (
+                              <option key={c.value} value={c.value}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            required
+                            inputMode="numeric"
+                            type="tel"
+                            className="w-full px-4 py-2.5 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all bg-primary/5"
+                            value={formatClPhone(formData.phone)}
+                            onChange={(e) => {
+                              const digits = (e.target.value || "")
+                                .replace(/\D/g, "")
+                                .slice(0, 9);
+                              setFormData({ ...formData, phone: digits });
+                            }}
+                            placeholder="9 1234 5678"
+                          />
+                        </div>
+                        <p
+                          className={`mt-1 text-xs ${
+                            isPhoneValid ? "text-primary/60" : "text-red-600"
+                          }`}
+                        >
+                          Formato: 9 1234 5678{" "}
+                          {isPhoneValid ? "" : "(9 dígitos requeridos)"}
+                        </p>
+                      </div>
 
-                  {quoteError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
-                      <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-                      <p className="text-sm">{quoteError}</p>
-                    </div>
-                  )}
+                      <div className="bg-primary/5 p-4 rounded-lg mt-4">
+                        <p className="text-sm font-medium text-primary/60 mb-2">
+                          Resumen:
+                        </p>
+                        <ul className="text-sm text-primary/80 space-y-1 mb-3">
+                          {selectedServices.map((s) => (
+                            <li key={s.id} className="flex">
+                              <span>{s.name}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
 
-                  <button
-                    type="submit"
-                    disabled={sending || !isPhoneValid}
-                    className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {sending ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      "Enviar Cotización"
-                    )}
-                  </button>
-                </form>
+                      {quoteError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
+                          <AlertCircle
+                            size={20}
+                            className="flex-shrink-0 mt-0.5"
+                          />
+                          <p className="text-sm">{quoteError}</p>
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={sending || !isPhoneValid}
+                        className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {sending ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          "Enviar Cotización"
+                        )}
+                      </button>
+                    </form>
+                  </>
+                )}
               </>
             </div>
           </div>
