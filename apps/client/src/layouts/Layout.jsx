@@ -1,7 +1,7 @@
 // client/src/layouts/Layout.jsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Instagram, Mail, Phone } from 'lucide-react';
+import { Menu, X, Instagram, Mail, Phone, Globe, Linkedin } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Layout({ children }) {
@@ -150,7 +150,7 @@ export default function Layout({ children }) {
                   <Mail size={18} /> <span>contacto@podologiaconi.cl</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Phone size={18} /> <span>+56 9 1234 5678</span>
+                  <Phone size={18} /> <span>+56 9 8961 1241</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Instagram size={18} /> <span>@podologia_coni</span>
@@ -161,6 +161,40 @@ export default function Layout({ children }) {
           </div>
           <div className="border-t border-white/10 mt-12 pt-8 text-center text-sm text-gray-400">
             <p>© {new Date().getFullYear()} Podología Coni. Todos los derechos reservados.</p>
+
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <p>Sitio desarrollado por Alvaro Pelu Cortés</p>
+
+              <div className="flex gap-6">
+                <a
+                  href="https://www.alvarocortes.cl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Sitio web"
+                  className="hover:text-white transition-colors"
+                >
+                  <Globe size={20} />
+                </a>
+
+                <a
+                  href="https://www.linkedin.com/in/alvarocortesopazo/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="hover:text-white transition-colors"
+                >
+                  <Linkedin size={20} />
+                </a>
+
+                <a
+                  href="mailto:alvaro.cortes.dev@outlook.com"
+                  aria-label="Correo"
+                  className="hover:text-white transition-colors"
+                >
+                  <Mail size={20} />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
