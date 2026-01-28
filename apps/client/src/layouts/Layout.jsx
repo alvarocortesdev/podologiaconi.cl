@@ -1,7 +1,7 @@
 // client/src/layouts/Layout.jsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Instagram, Mail, Phone, Globe, Linkedin, Whatsapp } from 'lucide-react';
+import { Menu, X, Instagram, Mail, Phone, Globe, Linkedin, messagesSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Layout({ children }) {
@@ -147,7 +147,7 @@ export default function Layout({ children }) {
               <h3 className="text-lg font-bold tracking-wider uppercase mb-4 text-secondary">Contacto</h3>
               <ul className="space-y-3 text-gray-300 text-sm">
                 <li className="flex items-center gap-3">
-                  <Whatsapp size={18} /> <a href="https://wa.me/56989611241" target="_blank" rel="noopener noreferrer"><span>Whatsapp</span></a>
+                  <messagesSquare size={18} /> <a href="https://wa.me/56989611241" target="_blank" rel="noopener noreferrer"><span>Whatsapp</span></a>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone size={18} /> <span>+56 9 8961 1241</span>
