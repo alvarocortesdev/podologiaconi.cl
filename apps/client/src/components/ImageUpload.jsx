@@ -206,7 +206,7 @@ export default function ImageUpload({ value, onChange, label }) {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="p-2 bg-red-500 rounded-full text-white hover:bg-red-600"
+                className="p-2 bg-white rounded-full text-red-500 hover:bg-gray-100"
               >
                 <Trash2 size={20} />
               </button>
@@ -222,6 +222,7 @@ export default function ImageUpload({ value, onChange, label }) {
               className="w-full h-full object-contain"
             />
             <button
+              type="button"
               onClick={() => {
                 setPreviewUrl(null);
                 setFileToUpload(null);
@@ -288,6 +289,7 @@ export default function ImageUpload({ value, onChange, label }) {
             <div className="p-4 border-b flex justify-between items-center">
               <h3 className="font-bold text-lg">Editar Imagen</h3>
               <button
+                type="button"
                 onClick={handleCancelCrop}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
@@ -348,12 +350,14 @@ export default function ImageUpload({ value, onChange, label }) {
 
               <div className="flex justify-end gap-3 pt-2 border-t">
                 <button
+                  type="button"
                   onClick={handleCancelCrop}
                   className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg"
                 >
                   Cancelar
                 </button>
                 <button
+                  type="button"
                   onClick={handleCropConfirm}
                   className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 flex items-center gap-2"
                 >
