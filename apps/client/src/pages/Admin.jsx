@@ -659,7 +659,7 @@ export default function Admin() {
           order: index,
         }));
 
-        await fetch("/api/about-cards/reorder", {
+        const response = await fetch("/api/about-cards/reorder", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -667,9 +667,12 @@ export default function Admin() {
           },
           body: JSON.stringify({ cards: orderUpdates }),
         });
+
+        if (!response.ok) {
+          throw new Error("Failed to save order");
+        }
       } catch (err) {
         console.error("Error updating order:", err);
-        // Revert on error?
         fetchAboutCards();
       }
     }
