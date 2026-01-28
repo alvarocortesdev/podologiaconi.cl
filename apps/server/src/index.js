@@ -282,6 +282,87 @@ app.post('/api/quote', async (req, res) => {
   }
 });
 
+// --- SITE CONTENT ROUTES ---
+
+// Get Site Config (Public)
+app.get('/api/config', async (req, res) => {
+  try {
+    const config = await prisma.siteConfig.findUnique({ where: { id: 1 } });
+    res.json(config || {});
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching config' });
+  }
+});
+
+// Update Site Config (Protected)
+app.put('/api/config', authenticateToken, async (req, res) => {
+  try {
+    const data = req.body;
+    // Remove id/updatedAt if present
+    delete data.id;
+    delete data.updatedAt;
+    
+    const config = await prisma.siteConfig.upsert({
+      where: { id: 1 },
+      update: data,
+      create: { id: 1, ...data }
+    });
+    res.json(config);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error updating config' });
+  }
+});
+
+// Get Success Cases (Public)
+app.get('/api/success-cases', async (req, res) => {
+  try {
+    const cases = await prisma.successCase.findMany({ orderBy: { id: 'asc' } });
+    res.json(cases);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching success cases' });
+  }
+});
+
+// Create Success Case (Protected)
+app.post('/api/success-cases', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, imageBefore, imageAfter } = req.body;
+    const newCase = await prisma.successCase.create({
+      data: { title, description, imageBefore, imageAfter }
+    });
+    res.json(newCase);
+  } catch (error) {
+    res.status(500).json({ error: 'Error creating success case' });
+  }
+});
+
+// Update Success Case (Protected)
+app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, imageBefore, imageAfter } = req.body;
+    const updatedCase = await prisma.successCase.update({
+      where: { id: parseInt(id) },
+      data: { title, description, imageBefore, imageAfter }
+    });
+    res.json(updatedCase);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating success case' });
+  }
+});
+
+// Delete Success Case (Protected)
+app.delete('/api/success-cases/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.successCase.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Success case deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error deleting success case' });
+  }
+});
+
 // Export app for Vercel
 module.exports = app;
 
