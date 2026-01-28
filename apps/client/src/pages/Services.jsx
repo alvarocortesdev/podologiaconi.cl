@@ -1,6 +1,6 @@
 // client/src/pages/Services.jsx
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, X, Loader2, CheckCircle } from 'lucide-react';
+import { ShoppingBag, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Services() {
@@ -13,6 +13,7 @@ export default function Services() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [quoteError, setQuoteError] = useState(null);
 
   // Fallback mock data in case API fails
   const mockServices = [
@@ -77,18 +78,47 @@ export default function Services() {
   const handleQuote = async (e) => {
     e.preventDefault();
     setSending(true);
-    // Mock API call
-    console.log("Sending quote:", { ...formData, services: selectedServices });
-    setTimeout(() => {
+    setQuoteError(null);
+    
+    try {
+      const response = await fetch('/api/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          services: selectedServices.map(s => ({
+            name: s.name,
+            price: s.price
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error al enviar la cotización' }));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
       setSuccess(true);
       setSelectedServices([]);
-      setSending(false);
+      
+      // Close modal after 3 seconds
       setTimeout(() => {
         setShowModal(false);
         setSuccess(false);
         setFormData({ name: '', email: '', phone: '' });
+        setQuoteError(null);
       }, 3000);
-    }, 1500);
+    } catch (err) {
+      console.error('Error sending quote:', err);
+      setQuoteError(err.message || 'Error al enviar la cotización. Por favor, intenta nuevamente.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -191,7 +221,12 @@ export default function Services() {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative animate-fade-in-up">
               <button 
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setQuoteError(null);
+                  setSuccess(false);
+                  setFormData({ name: '', email: '', phone: '' });
+                }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X size={24} />
@@ -238,6 +273,13 @@ export default function Services() {
                         <span>${total.toLocaleString('es-CL')}</span>
                       </div>
                     </div>
+
+                    {quoteError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
+                        <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+                        <p className="text-sm">{quoteError}</p>
+                      </div>
+                    )}
 
                     <button
                       type="submit"
