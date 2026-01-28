@@ -130,7 +130,7 @@ app.post('/api/quote', async (req, res) => {
     const { data, error } = await resend.emails.send({
       from: 'Podología Coni <contacto@podologiaconi.cl>',
       to: ['podologiaconi@outlook.com', 'constanza.cortes9@gmail.com'],
-      subject: `Nueva Cotización de ${name}`,
+      subject: `Cotización Web - podologiaconi.cl`,
       text: `Nombre: ${name}\n${emailLine}Teléfono: ${phone}\n\nServicios Seleccionados:\n${serviceList}`,
     });
 
