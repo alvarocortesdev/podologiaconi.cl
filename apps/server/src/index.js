@@ -412,32 +412,6 @@ app.post('/api/about-cards', authenticateToken, async (req, res) => {
   }
 });
 
-// Update About Card (Protected)
-app.put('/api/about-cards/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, subtitle, details } = req.body;
-    const card = await prisma.aboutCard.update({
-      where: { id: parseInt(id) },
-      data: { title, subtitle, details }
-    });
-    res.json(card);
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating about card' });
-  }
-});
-
-// Delete About Card (Protected)
-app.delete('/api/about-cards/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.aboutCard.delete({ where: { id: parseInt(id) } });
-    res.json({ message: 'Card deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error deleting about card' });
-  }
-});
-
 // Reorder About Cards (Protected)
 app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
   try {
@@ -479,6 +453,34 @@ app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
     });
   }
 });
+
+// Update About Card (Protected)
+app.put('/api/about-cards/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, subtitle, details } = req.body;
+    const card = await prisma.aboutCard.update({
+      where: { id: parseInt(id) },
+      data: { title, subtitle, details }
+    });
+    res.json(card);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating about card' });
+  }
+});
+
+// Delete About Card (Protected)
+app.delete('/api/about-cards/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.aboutCard.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Card deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error deleting about card' });
+  }
+});
+
+
 
 
 // Get Success Cases (Public)
