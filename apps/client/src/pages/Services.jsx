@@ -71,6 +71,20 @@ export default function Services() {
   const [phoneCountry, setPhoneCountry] = useState("+56");
   const [sending, setSending] = useState(false);
   const [quoteError, setQuoteError] = useState(null);
+  const SA_COUNTRY_CODES = [
+    { label: "Chile +56", value: "+56" },
+    { label: "Argentina +54", value: "+54" },
+    { label: "Bolivia +591", value: "+591" },
+    { label: "Brasil +55", value: "+55" },
+    { label: "Colombia +57", value: "+57" },
+    { label: "Ecuador +593", value: "+593" },
+    { label: "Guyana +592", value: "+592" },
+    { label: "Paraguay +595", value: "+595" },
+    { label: "Perú +51", value: "+51" },
+    { label: "Surinam +597", value: "+597" },
+    { label: "Uruguay +598", value: "+598" },
+    { label: "Venezuela +58", value: "+58" },
+  ];
 
   useEffect(() => {
     const cachedRaw = localStorage.getItem(SERVICES_CACHE_KEY);
@@ -374,7 +388,11 @@ export default function Services() {
                         onChange={(e) => setPhoneCountry(e.target.value)}
                         className="px-3 py-2.5 border border-primary/20 rounded-lg bg-white text-primary focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                       >
-                        <option value="+56">Chile +56</option>
+                        {SA_COUNTRY_CODES.map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label}
+                          </option>
+                        ))}
                       </select>
                       <input
                         required
