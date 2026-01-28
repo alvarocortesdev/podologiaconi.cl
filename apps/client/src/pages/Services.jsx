@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import SkeletonCard from '../components/SkeletonCard';
 
 export default function Services() {
   const [services, setServices] = useState([]);
@@ -153,11 +154,13 @@ export default function Services() {
 
         {/* Services Grid */}
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="animate-spin text-primary w-12 h-12" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+            {[...Array(6)].map((_, index) => (
+              <SkeletonCard key={index} />
+            ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24 animate-fade-in-up">
             {filteredServices.map(service => {
               const isSelected = selectedServices.some(s => s.id === service.id);
               return (
