@@ -313,7 +313,7 @@ export default function Home() {
                 {selectedCase.title}
               </h3>
               <div
-                className="text-primary/70 text-sm sm:text-base leading-relaxed prose prose-sm prose-primary max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 break-words whitespace-normal hyphens-none"
+                className="text-primary/70 text-sm sm:text-base leading-relaxed prose prose-sm prose-primary max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 break-normal whitespace-normal hyphens-none"
                 dangerouslySetInnerHTML={{ __html: selectedCase.description }}
               />
             </div>
