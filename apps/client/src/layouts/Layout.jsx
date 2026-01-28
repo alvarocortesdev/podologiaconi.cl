@@ -68,7 +68,8 @@ export default function Layout({ children }) {
     } else {
       const element = document.querySelector(id);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        const targetY = element.getBoundingClientRect().top + window.scrollY;
+        animateScroll(targetY, 1000);
       }
     }
   };
@@ -78,14 +79,32 @@ export default function Layout({ children }) {
     if (scrollTo) {
       const element = document.querySelector(scrollTo);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        const targetY = element.getBoundingClientRect().top + window.scrollY;
+        animateScroll(targetY, 1000);
       }
     } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      animateScroll(0, 1000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);
 
+  const animateScroll = (targetY, duration = 1000) => {
+    const startY = window.scrollY || window.pageYOffset;
+    const distance = targetY - startY;
+    const startTime = performance.now();
+    const easeInOutCubic = (t) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeInOutCubic(progress);
+      window.scrollTo(0, startY + distance * eased);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    requestAnimationFrame(step);
+  };
   return (
     <IntroContext.Provider value={{ introStep }}>
       <div className="min-h-screen flex flex-col bg-background font-sans text-primary">
