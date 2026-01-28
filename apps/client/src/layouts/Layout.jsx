@@ -165,10 +165,14 @@ export default function Layout({ children }) {
             </div>
 
           </div>
-          <div className="border-t border-white/10 mt-12 pt-8 text-center text-sm text-gray-400">
+          <div className="mt-12 pt-6 border-t border-white/20 text-center text-sm text-gray-400">
             <p>© {new Date().getFullYear()} Podología Coni. Todos los derechos reservados.</p>
 
-            <div className="mt-4 flex flex-col items-center gap-3">
+            {/* Divider */}
+            <div className="mx-auto my-4 h-px w-24 bg-white/20" />
+
+            {/* Developer credits */}
+            <div className="flex flex-col items-center gap-3">
               <p>Sitio desarrollado por Alvaro Pelusa™ Cortés</p>
 
               <div className="flex gap-6">
@@ -179,7 +183,7 @@ export default function Layout({ children }) {
                   aria-label="Sitio web"
                   className="hover:text-white transition-colors"
                 >
-                  <Globe size={20} />
+                  <Globe size={18} />
                 </a>
 
                 <a
@@ -189,7 +193,7 @@ export default function Layout({ children }) {
                   aria-label="LinkedIn"
                   className="hover:text-white transition-colors"
                 >
-                  <Linkedin size={20} />
+                  <Linkedin size={18} />
                 </a>
 
                 <a
@@ -197,7 +201,7 @@ export default function Layout({ children }) {
                   aria-label="Correo"
                   className="hover:text-white transition-colors"
                 >
-                  <Mail size={20} />
+                  <Mail size={18} />
                 </a>
               </div>
             </div>
