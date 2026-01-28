@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from "react";
 import ImageUpload from "../components/ImageUpload";
+import SortableCard from "../components/SortableCard";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import {
   Lock,
   Plus,
@@ -17,6 +32,9 @@ import {
   FileText,
   AlertCircle,
   Globe,
+  User,
+  Phone,
+  Instagram,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -27,7 +45,7 @@ export default function Admin() {
   const [tempToken, setTempToken] = useState(null);
 
   // Dashboard Tabs
-  const [activeTab, setActiveTab] = useState("SERVICES"); // SERVICES | CONFIG | SUCCESS_CASES
+  const [activeTab, setActiveTab] = useState("CONFIG"); // SERVICES | CONFIG | SUCCESS_CASES
 
   // Login Form
   const [username, setUsername] = useState("");
@@ -52,6 +70,7 @@ export default function Admin() {
   const [services, setServices] = useState([]);
   const [siteConfig, setSiteConfig] = useState(null);
   const [successCases, setSuccessCases] = useState([]);
+  const [aboutCards, setAboutCards] = useState([]);
 
   // Image States for Forms
   const [configAboutImage, setConfigAboutImage] = useState(null);
@@ -65,6 +84,17 @@ export default function Admin() {
 
   const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
   const [currentCase, setCurrentCase] = useState(null);
+
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [currentCard, setCurrentCard] = useState(null);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   // Profile State
   const [emailStep, setEmailStep] = useState("REQUEST"); // REQUEST | CONFIRM
@@ -87,6 +117,7 @@ export default function Admin() {
     fetchServices();
     fetchConfig();
     fetchSuccessCases();
+    fetchAboutCards();
   };
 
   const fetchServices = async () => {
@@ -120,6 +151,15 @@ export default function Admin() {
     }
   };
 
+  const fetchAboutCards = async () => {
+    try {
+      const response = await fetch("/api/about-cards");
+      if (response.ok) setAboutCards(await response.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -146,7 +186,7 @@ export default function Admin() {
       } else if (data.status === "2FA_REQUIRED") {
         setTempToken(data.token);
         setAuthState("2FA");
-        setSuccessMsg("Hemos enviado un código de verificación a tu correo.");
+        // setSuccessMsg("Hemos enviado un código de verificación a tu correo."); // Removed as requested
       } else if (data.token) {
         // Fallback for unexpected direct login
         localStorage.setItem("token", data.token);
@@ -545,6 +585,99 @@ export default function Admin() {
     setCaseImageBefore(item?.imageBefore || null);
     setCaseImageAfter(item?.imageAfter || null);
     setIsCaseModalOpen(true);
+    setError(null);
+  };
+
+  // About Cards
+  const handleSaveCard = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      const url = currentCard
+        ? `/api/about-cards/${currentCard.id}`
+        : "/api/about-cards";
+
+      const method = currentCard ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error("Error al guardar tarjeta");
+
+      await fetchAboutCards();
+      setIsCardModalOpen(false);
+      setCurrentCard(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCard = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta tarjeta?")) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/about-cards/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Error al eliminar tarjeta");
+      await fetchAboutCards();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      const oldIndex = aboutCards.findIndex((item) => item.id === active.id);
+      const newIndex = aboutCards.findIndex((item) => item.id === over.id);
+
+      const newOrder = arrayMove(aboutCards, oldIndex, newIndex);
+      setAboutCards(newOrder);
+
+      // Save new order
+      try {
+        const orderUpdates = newOrder.map((card, index) => ({
+          id: card.id,
+          order: index,
+        }));
+
+        await fetch("/api/about-cards/reorder", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ cards: orderUpdates }),
+        });
+      } catch (err) {
+        console.error("Error updating order:", err);
+        // Revert on error?
+        fetchAboutCards();
+      }
+    }
+  };
+
+  const openCardModal = (card = null) => {
+    setCurrentCard(card);
+    setIsCardModalOpen(true);
     setError(null);
   };
 
@@ -1090,13 +1223,66 @@ export default function Admin() {
                         className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
                       />
                     </div>
-                    <div>
-                      <ImageUpload
-                        value={configAboutImage}
-                        onChange={setConfigAboutImage}
-                        label="Imagen"
-                      />
+
+                    {/* About Cards Sortable List */}
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <label className="block text-sm font-bold text-primary/80">
+                          Tarjetas Informativas
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => openCardModal()}
+                          className="text-xs bg-secondary/20 text-secondary-dark px-3 py-1.5 rounded-lg font-bold hover:bg-secondary/30 transition-colors flex items-center gap-1"
+                        >
+                          <Plus size={14} /> Agregar
+                        </button>
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-xl border border-primary/5 min-h-[100px]">
+                        {aboutCards.length === 0 ? (
+                          <div className="text-center text-primary/40 text-sm py-4">
+                            No hay tarjetas. Agrega una nueva.
+                          </div>
+                        ) : (
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <SortableContext
+                              items={aboutCards}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="space-y-3">
+                                {aboutCards.map((card) => (
+                                  <SortableCard
+                                    key={card.id}
+                                    card={card}
+                                    onEdit={openCardModal}
+                                    onDelete={handleDeleteCard}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        )}
+                      </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Avatar Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <User size={20} /> Sección Avatar
+                  </h3>
+                  <div>
+                    <ImageUpload
+                      value={configAboutImage}
+                      onChange={setConfigAboutImage}
+                      label="Imagen de Perfil (Avatar)"
+                    />
                   </div>
                 </div>
 
@@ -1106,6 +1292,17 @@ export default function Admin() {
                     <Layout size={20} /> Sección Principal (Hero)
                   </h3>
                   <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Etiqueta (Tagline)
+                      </label>
+                      <input
+                        name="heroTagline"
+                        defaultValue={siteConfig?.heroTagline}
+                        placeholder="Ej: Atención Podológica Profesional"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
                     <div>
                       <label className="block text-sm font-bold text-primary/80 mb-1">
                         Título Principal
@@ -1138,36 +1335,30 @@ export default function Admin() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-bold text-primary/80 mb-1">
-                        Email
-                      </label>
-                      <input
-                        name="email"
-                        defaultValue={siteConfig?.email}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-primary/80 mb-1">
                         Teléfono
                       </label>
-                      <input
-                        name="phone"
-                        defaultValue={siteConfig?.phone}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Phone size={18} className="text-primary/40" />
+                        <input
+                          name="phone"
+                          defaultValue={siteConfig?.phone}
+                          className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                        />
+                      </div>
                     </div>
-                    {/* Address Removed */}
                     <div>
                       <label className="block text-sm font-bold text-primary/80 mb-1">
                         Instagram URL
                       </label>
-                      <input
-                        name="instagram"
-                        defaultValue={siteConfig?.instagram}
-                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Instagram size={18} className="text-primary/40" />
+                        <input
+                          name="instagram"
+                          defaultValue={siteConfig?.instagram}
+                          className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                        />
+                      </div>
                     </div>
-                    {/* Facebook Removed */}
                   </div>
                 </div>
 
@@ -1519,6 +1710,84 @@ export default function Admin() {
                   {loading ? (
                     <Loader2 className="animate-spin" size={18} />
                   ) : currentCase ? (
+                    "Actualizar"
+                  ) : (
+                    "Guardar"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CARD MODAL */}
+      {isCardModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
+              <h2 className="text-xl font-bold font-display">
+                {currentCard ? "Editar Tarjeta" : "Nueva Tarjeta"}
+              </h2>
+              <button
+                onClick={() => setIsCardModalOpen(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveCard} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Título
+                </label>
+                <input
+                  name="title"
+                  defaultValue={currentCard?.title}
+                  required
+                  placeholder="Ej: Formación"
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Subtítulo (Opcional)
+                </label>
+                <input
+                  name="subtitle"
+                  defaultValue={currentCard?.subtitle}
+                  placeholder="Ej: Universidad X"
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Detalles/Año (Opcional)
+                </label>
+                <input
+                  name="details"
+                  defaultValue={currentCard?.details}
+                  placeholder="Ej: 2020 - 2024"
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCardModalOpen(false)}
+                  className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : currentCard ? (
                     "Actualizar"
                   ) : (
                     "Guardar"

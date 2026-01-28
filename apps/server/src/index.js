@@ -335,7 +335,10 @@ app.post('/api/quote', async (req, res) => {
 // Get Site Config (Public)
 app.get('/api/config', async (req, res) => {
   try {
-    const config = await prisma.siteConfig.findUnique({ where: { id: 1 } });
+    const config = await prisma.siteConfig.findUnique({
+      where: { id: 1 },
+      include: { aboutCards: { orderBy: { order: 'asc' } } }
+    });
     res.json(config || {});
   } catch (error) {
     res.status(500).json({ error: 'Error fetching config' });
@@ -346,9 +349,10 @@ app.get('/api/config', async (req, res) => {
 app.put('/api/config', authenticateToken, async (req, res) => {
   try {
     const data = req.body;
-    // Remove id/updatedAt if present
+    // Remove id/updatedAt/aboutCards if present (handle cards via dedicated endpoints)
     delete data.id;
     delete data.updatedAt;
+    delete data.aboutCards;
 
     // Fetch current config to check for image changes
     const currentConfig = await prisma.siteConfig.findUnique({ where: { id: 1 } });
@@ -368,6 +372,96 @@ app.put('/api/config', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Error updating config' });
   }
 });
+
+// --- ABOUT CARDS ROUTES ---
+
+// Get About Cards (Public)
+app.get('/api/about-cards', async (req, res) => {
+  try {
+    const cards = await prisma.aboutCard.findMany({ orderBy: { order: 'asc' } });
+    res.json(cards);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching about cards' });
+  }
+});
+
+// Create About Card (Protected)
+app.post('/api/about-cards', authenticateToken, async (req, res) => {
+  try {
+    const { title, subtitle, details } = req.body;
+
+    // Get max order
+    const lastCard = await prisma.aboutCard.findFirst({
+      orderBy: { order: 'desc' }
+    });
+    const order = (lastCard?.order || 0) + 1;
+
+    const card = await prisma.aboutCard.create({
+      data: {
+        title,
+        subtitle,
+        details,
+        order,
+        siteConfigId: 1
+      }
+    });
+    res.json(card);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error creating about card' });
+  }
+});
+
+// Update About Card (Protected)
+app.put('/api/about-cards/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, subtitle, details } = req.body;
+    const card = await prisma.aboutCard.update({
+      where: { id: parseInt(id) },
+      data: { title, subtitle, details }
+    });
+    res.json(card);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating about card' });
+  }
+});
+
+// Delete About Card (Protected)
+app.delete('/api/about-cards/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.aboutCard.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Card deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error deleting about card' });
+  }
+});
+
+// Reorder About Cards (Protected)
+app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { cards } = req.body; // Array of { id, order }
+
+    if (!Array.isArray(cards)) return res.status(400).json({ error: 'Invalid data' });
+
+    // Transactional update
+    await prisma.$transaction(
+      cards.map((card) =>
+        prisma.aboutCard.update({
+          where: { id: card.id },
+          data: { order: card.order }
+        })
+      )
+    );
+
+    res.json({ message: 'Cards reordered' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error reordering cards' });
+  }
+});
+
 
 // Get Success Cases (Public)
 app.get('/api/success-cases', async (req, res) => {
