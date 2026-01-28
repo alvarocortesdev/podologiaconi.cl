@@ -37,3 +37,37 @@ model Contact {
   phone     String   @unique
   createdAt DateTime @default(now())
 }
+
+model SiteConfig {
+  id          Int      @id @default(1)
+  
+  // Contact Info
+  email       String   @default("contacto@podologiaconi.cl")
+  phone       String   @default("+56 9 XXXX XXXX")
+  address     String   @default("Consulta en...")
+  instagram   String?
+  facebook    String?
+  whatsapp    String?
+
+  // Hero Section
+  heroTitle      String   @default("Podología Clínica Integral")
+  heroSubtitle   String   @default("Recupera la salud y belleza de tus pies con atención profesional personalizada.")
+  heroButtonText String   @default("Agenda tu Hora")
+
+  // About Section
+  aboutTitle     String   @default("Hola, soy Constanza Cortés")
+  aboutText      String   @default("Podóloga clínica certificada con experiencia en el tratamiento de diversas patologías del pie. Mi compromiso es brindar una atención de calidad, segura y empática.")
+  aboutImage     String?
+
+  updatedAt   DateTime @updatedAt
+}
+
+model SuccessCase {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  imageBefore String?
+  imageAfter  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

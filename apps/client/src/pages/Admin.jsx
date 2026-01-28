@@ -1,62 +1,104 @@
-import React, { useState, useEffect } from 'react';
-import { Lock, Plus, Pencil, Trash2, X, LogOut, Loader2, CheckCircle, Mail, Key } from 'lucide-react';
-import clsx from 'clsx';
+import React, { useState, useEffect } from "react";
+import {
+  Lock,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  LogOut,
+  Loader2,
+  CheckCircle,
+  Mail,
+  Key,
+  Layout,
+  Settings,
+  Image as ImageIcon,
+  FileText,
+} from "lucide-react";
+import clsx from "clsx";
 
 export default function Admin() {
   // Auth State: 'LOGIN' | 'SETUP' | '2FA' | 'DASHBOARD'
-  const [authState, setAuthState] = useState('LOGIN');
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [authState, setAuthState] = useState("LOGIN");
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [tempToken, setTempToken] = useState(null);
-  
+
+  // Dashboard Tabs
+  const [activeTab, setActiveTab] = useState("SERVICES"); // SERVICES | CONFIG | SUCCESS_CASES
+
   // Login Form
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   // Setup Form
-  const [email, setEmail] = useState('');
-  const [setupCode, setSetupCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [setupCode, setSetupCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [codeSent, setCodeSent] = useState(false);
 
   // 2FA Form
-  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState("");
 
   // General UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
-  // Dashboard Data
+  // Data State
   const [services, setServices] = useState([]);
+  const [siteConfig, setSiteConfig] = useState(null);
+  const [successCases, setSuccessCases] = useState([]);
+
+  // Modals & Current Items
   const [servicesLoading, setServicesLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState(null);
+
+  const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
+  const [currentCase, setCurrentCase] = useState(null);
 
   useEffect(() => {
     if (token) {
-      setAuthState('DASHBOARD');
-      fetchServices();
+      setAuthState("DASHBOARD");
+      fetchAllData();
     }
   }, [token]);
+
+  const fetchAllData = () => {
+    fetchServices();
+    fetchConfig();
+    fetchSuccessCases();
+  };
 
   const fetchServices = async () => {
     try {
       setServicesLoading(true);
-      setError(null);
-      const response = await fetch('/api/services');
-      
-      if (!response.ok) {
-        throw new Error(`Error al cargar servicios: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setServices(data);
+      const response = await fetch("/api/services");
+      if (!response.ok) throw new Error("Error loading services");
+      setServices(await response.json());
     } catch (err) {
-      console.error('Error fetching services:', err);
-      setError(err.message);
+      console.error(err);
     } finally {
       setServicesLoading(false);
+    }
+  };
+
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch("/api/config");
+      if (response.ok) setSiteConfig(await response.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchSuccessCases = async () => {
+    try {
+      const response = await fetch("/api/success-cases");
+      if (response.ok) setSuccessCases(await response.json());
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -65,44 +107,44 @@ export default function Admin() {
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
-    
+
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al iniciar sesión');
+        throw new Error(data.error || "Error al iniciar sesión");
       }
 
-      if (data.status === 'SETUP_REQUIRED') {
+      if (data.status === "SETUP_REQUIRED") {
         setTempToken(data.token);
-        setAuthState('SETUP');
-        setSuccessMsg('Por seguridad, debes configurar tu cuenta.');
-      } else if (data.status === '2FA_REQUIRED') {
+        setAuthState("SETUP");
+        setSuccessMsg("Por seguridad, debes configurar tu cuenta.");
+      } else if (data.status === "2FA_REQUIRED") {
         setTempToken(data.token);
-        setAuthState('2FA');
-        setSuccessMsg('Hemos enviado un código de verificación a tu correo.');
+        setAuthState("2FA");
+        setSuccessMsg("Hemos enviado un código de verificación a tu correo.");
       } else if (data.token) {
         // Fallback for unexpected direct login
-        localStorage.setItem('token', data.token);
+        localStorage.setItem("token", data.token);
         setToken(data.token);
-        setAuthState('DASHBOARD');
+        setAuthState("DASHBOARD");
       }
     } catch (err) {
-      setError(err.message || 'Credenciales incorrectas');
+      setError(err.message || "Credenciales incorrectas");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSendSetupCode = async () => {
-    if (!email || !email.includes('@')) {
-      setError('Ingresa un correo válido');
+    if (!email || !email.includes("@")) {
+      setError("Ingresa un correo válido");
       return;
     }
 
@@ -110,18 +152,18 @@ export default function Admin() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
+      const response = await fetch("/api/auth/send-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tempToken}`,
         },
         body: JSON.stringify({ email }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Error al enviar código');
+        throw new Error(data.error || "Error al enviar código");
       }
 
       setCodeSent(true);
@@ -138,43 +180,44 @@ export default function Admin() {
     setError(null);
 
     if (newPassword !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError("Las contraseñas no coinciden");
       return;
     }
     if (setupCode.length !== 8) {
-      setError('El código debe tener 8 caracteres');
+      setError("El código debe tener 8 caracteres");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/setup', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
+      const response = await fetch("/api/auth/setup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tempToken}`,
         },
         body: JSON.stringify({ email, code: setupCode, newPassword }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Error en la configuración');
+        throw new Error(data.error || "Error en la configuración");
       }
 
-      setAuthState('LOGIN');
+      setAuthState("LOGIN");
       setTempToken(null);
-      setUsername('');
-      setPassword('');
-      setSuccessMsg('Configuración exitosa. Inicia sesión con tu nueva contraseña.');
+      setUsername("");
+      setPassword("");
+      setSuccessMsg(
+        "Configuración exitosa. Inicia sesión con tu nueva contraseña.",
+      );
       // Reset setup fields
-      setEmail('');
-      setSetupCode('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setEmail("");
+      setSetupCode("");
+      setNewPassword("");
+      setConfirmPassword("");
       setCodeSent(false);
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -188,11 +231,11 @@ export default function Admin() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/verify-2fa', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
+      const response = await fetch("/api/auth/verify-2fa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tempToken}`,
         },
         body: JSON.stringify({ code: twoFactorCode }),
       });
@@ -200,12 +243,12 @@ export default function Admin() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Código inválido');
+        throw new Error(data.error || "Código inválido");
       }
 
-      localStorage.setItem('token', data.token);
+      localStorage.setItem("token", data.token);
       setToken(data.token);
-      setAuthState('DASHBOARD');
+      setAuthState("DASHBOARD");
       setTempToken(null);
     } catch (err) {
       setError(err.message);
@@ -215,51 +258,49 @@ export default function Admin() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setToken(null);
-    setAuthState('LOGIN');
-    setUsername('');
-    setPassword('');
+    setAuthState("LOGIN");
+    setUsername("");
+    setPassword("");
   };
 
-  // --- CRUD Handlers (Same as before) ---
+  // --- CRUD Handlers ---
+
+  // Services
   const handleSubmitService = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
       const formData = new FormData(e.target);
       const data = {
-        name: formData.get('name'),
-        description: formData.get('description'),
-        price: parseFloat(formData.get('price')),
-        category: formData.get('category'),
+        name: formData.get("name"),
+        description: formData.get("description"),
+        price: parseFloat(formData.get("price")),
+        category: formData.get("category"),
       };
 
-      const url = currentService 
+      const url = currentService
         ? `/api/services/${currentService.id}`
-        : '/api/services';
-      
-      const method = currentService ? 'PUT' : 'POST';
+        : "/api/services";
+
+      const method = currentService ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || `Error al ${currentService ? 'actualizar' : 'crear'} servicio`);
-      }
+      if (!response.ok) throw new Error("Error al guardar servicio");
 
       await fetchServices();
-      setIsModalOpen(false);
+      setIsServiceModalOpen(false);
       setCurrentService(null);
     } catch (err) {
       setError(err.message);
@@ -268,25 +309,15 @@ export default function Admin() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteService = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este servicio?")) return;
-    
     setLoading(true);
-    setError(null);
-    
     try {
       const response = await fetch(`/api/services/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Error al eliminar servicio');
-      }
-
+      if (!response.ok) throw new Error("Error al eliminar");
       await fetchServices();
     } catch (err) {
       setError(err.message);
@@ -295,15 +326,106 @@ export default function Admin() {
     }
   };
 
-  const openModal = (service = null) => {
+  const openServiceModal = (service = null) => {
     setCurrentService(service);
-    setIsModalOpen(true);
+    setIsServiceModalOpen(true);
+    setError(null);
+  };
+
+  // Config
+  const handleSaveConfig = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    try {
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      const response = await fetch("/api/config", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error("Error al guardar configuración");
+
+      const updated = await response.json();
+      setSiteConfig(updated);
+      setSuccessMsg("Configuración actualizada correctamente");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Success Cases
+  const handleSubmitCase = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      const url = currentCase
+        ? `/api/success-cases/${currentCase.id}`
+        : "/api/success-cases";
+
+      const method = currentCase ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error("Error al guardar caso");
+
+      await fetchSuccessCases();
+      setIsCaseModalOpen(false);
+      setCurrentCase(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCase = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar este caso?")) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/success-cases/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Error al eliminar");
+      await fetchSuccessCases();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCaseModal = (item = null) => {
+    setCurrentCase(item);
+    setIsCaseModalOpen(true);
     setError(null);
   };
 
   // --- RENDER VIEWS ---
 
-  if (authState === 'LOGIN') {
+  if (authState === "LOGIN") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
@@ -311,12 +433,18 @@ export default function Admin() {
             <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Lock size={32} />
             </div>
-            <h1 className="text-3xl font-bold font-display text-primary">Área Privada</h1>
-            <p className="text-primary/70 mt-2">Ingresa tus credenciales para administrar.</p>
+            <h1 className="text-3xl font-bold font-display text-primary">
+              Área Privada
+            </h1>
+            <p className="text-primary/70 mt-2">
+              Ingresa tus credenciales para administrar.
+            </p>
           </div>
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-primary/80 mb-1">Usuario</label>
+              <label className="block text-sm font-bold text-primary/80 mb-1">
+                Usuario
+              </label>
               <input
                 type="text"
                 className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
@@ -325,7 +453,9 @@ export default function Admin() {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-primary/80 mb-1">Contraseña</label>
+              <label className="block text-sm font-bold text-primary/80 mb-1">
+                Contraseña
+              </label>
               <input
                 type="password"
                 className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
@@ -348,7 +478,11 @@ export default function Admin() {
               disabled={loading}
               className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}
+              {loading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Iniciar Sesión"
+              )}
             </button>
           </form>
         </div>
@@ -356,7 +490,7 @@ export default function Admin() {
     );
   }
 
-  if (authState === 'SETUP') {
+  if (authState === "SETUP") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-lg border border-primary/10">
@@ -364,14 +498,20 @@ export default function Admin() {
             <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Key size={32} />
             </div>
-            <h1 className="text-2xl font-bold font-display text-primary">Configuración Inicial</h1>
-            <p className="text-primary/70 mt-2">Es tu primer ingreso. Configura tu cuenta para continuar.</p>
+            <h1 className="text-2xl font-bold font-display text-primary">
+              Configuración Inicial
+            </h1>
+            <p className="text-primary/70 mt-2">
+              Es tu primer ingreso. Configura tu cuenta para continuar.
+            </p>
           </div>
-          
+
           <form onSubmit={handleSetup} className="space-y-5">
             <div className="flex gap-2 items-end">
               <div className="flex-1">
-                <label className="block text-sm font-bold text-primary/80 mb-1">Correo Electrónico</label>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Correo Electrónico
+                </label>
                 <input
                   type="email"
                   className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
@@ -387,19 +527,23 @@ export default function Admin() {
                 disabled={loading || codeSent || !email}
                 className="px-4 py-3 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 h-[50px]"
               >
-                {codeSent ? 'Enviado' : 'Validar'}
+                {codeSent ? "Enviado" : "Validar"}
               </button>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-primary/80 mb-1">Código de Verificación (8 dígitos)</label>
+              <label className="block text-sm font-bold text-primary/80 mb-1">
+                Código de Verificación (8 dígitos)
+              </label>
               <input
                 type="text"
                 maxLength={8}
                 className={clsx(
                   "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5 font-mono text-center tracking-widest uppercase",
-                  setupCode.length === 8 ? "border-green-500 bg-green-50" : "border-primary/20",
-                  !setupCode && "border-red-300 placeholder-red-300"
+                  setupCode.length === 8
+                    ? "border-green-500 bg-green-50"
+                    : "border-primary/20",
+                  !setupCode && "border-red-300 placeholder-red-300",
                 )}
                 value={setupCode}
                 onChange={(e) => setSetupCode(e.target.value.toUpperCase())}
@@ -409,7 +553,9 @@ export default function Admin() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">Nueva Contraseña</label>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Nueva Contraseña
+                </label>
                 <input
                   type="password"
                   className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
@@ -418,7 +564,9 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">Repetir Contraseña</label>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Repetir Contraseña
+                </label>
                 <input
                   type="password"
                   className="w-full px-4 py-3 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none transition-all bg-primary/5"
@@ -444,7 +592,11 @@ export default function Admin() {
               disabled={loading || !codeSent || setupCode.length !== 8}
               className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="animate-spin" /> : 'Guardar y Continuar'}
+              {loading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Guardar y Continuar"
+              )}
             </button>
           </form>
         </div>
@@ -452,7 +604,7 @@ export default function Admin() {
     );
   }
 
-  if (authState === '2FA') {
+  if (authState === "2FA") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
@@ -460,13 +612,19 @@ export default function Admin() {
             <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Mail size={32} />
             </div>
-            <h1 className="text-2xl font-bold font-display text-primary">Verificación de Identidad</h1>
-            <p className="text-primary/70 mt-2">Ingresa el código que enviamos a tu correo.</p>
+            <h1 className="text-2xl font-bold font-display text-primary">
+              Verificación de Identidad
+            </h1>
+            <p className="text-primary/70 mt-2">
+              Ingresa el código que enviamos a tu correo.
+            </p>
           </div>
-          
+
           <form onSubmit={handleVerify2FA} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-primary/80 mb-1">Código de 8 dígitos</label>
+              <label className="block text-sm font-bold text-primary/80 mb-1">
+                Código de 8 dígitos
+              </label>
               <input
                 type="text"
                 maxLength={8}
@@ -482,18 +640,22 @@ export default function Admin() {
                 {error}
               </div>
             )}
-            
+
             <button
               type="submit"
               disabled={loading || twoFactorCode.length !== 8}
               className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="animate-spin" /> : 'Verificar y Entrar'}
+              {loading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Verificar y Entrar"
+              )}
             </button>
-            
+
             <button
               type="button"
-              onClick={() => setAuthState('LOGIN')}
+              onClick={() => setAuthState("LOGIN")}
               className="w-full py-2 text-primary/60 hover:text-primary text-sm"
             >
               Volver al inicio
@@ -504,123 +666,422 @@ export default function Admin() {
     );
   }
 
-  // DASHBOARD VIEW (Existing code wrapped)
+  // DASHBOARD VIEW
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <aside className="w-full md:w-64 bg-white border-b md:border-r border-primary/10 flex-shrink-0 md:h-screen sticky top-0 z-20">
+        <div className="p-6 flex justify-between items-center md:block">
           <div>
-            <h1 className="text-3xl font-bold font-display text-primary">Gestión de Servicios</h1>
-            <p className="text-primary/70 mt-1">Añade, edita o elimina servicios del catálogo.</p>
+            <h1 className="text-2xl font-bold font-display text-primary">
+              Admin Panel
+            </h1>
+            <p className="text-xs text-primary/60">v1.0.0</p>
           </div>
-          <div className="flex gap-4">
-            <button
-              onClick={() => openModal()}
-              className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
-            >
-              <Plus size={20} /> Nuevo Servicio
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-3 bg-white text-primary rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors flex items-center gap-2 shadow-sm border border-primary/10"
-              title="Cerrar Sesión"
-            >
-              <LogOut size={20} />
-            </button>
-          </div>
+          <button onClick={handleLogout} className="md:hidden text-primary/70">
+            <LogOut size={20} />
+          </button>
         </div>
 
-        {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+        <nav className="px-4 pb-4 md:pb-0 flex md:block gap-2 overflow-x-auto md:overflow-visible scrollbar-hide">
+          <button
+            onClick={() => setActiveTab("SERVICES")}
+            className={clsx(
+              "flex items-center gap-3 px-4 py-3 rounded-lg w-full transition-colors whitespace-nowrap",
+              activeTab === "SERVICES"
+                ? "bg-secondary/20 text-primary font-bold"
+                : "text-primary/70 hover:bg-primary/5",
+            )}
+          >
+            <Layout size={20} /> Servicios
+          </button>
+          <button
+            onClick={() => setActiveTab("SUCCESS_CASES")}
+            className={clsx(
+              "flex items-center gap-3 px-4 py-3 rounded-lg w-full transition-colors whitespace-nowrap",
+              activeTab === "SUCCESS_CASES"
+                ? "bg-secondary/20 text-primary font-bold"
+                : "text-primary/70 hover:bg-primary/5",
+            )}
+          >
+            <ImageIcon size={20} /> Casos de Éxito
+          </button>
+          <button
+            onClick={() => setActiveTab("CONFIG")}
+            className={clsx(
+              "flex items-center gap-3 px-4 py-3 rounded-lg w-full transition-colors whitespace-nowrap",
+              activeTab === "CONFIG"
+                ? "bg-secondary/20 text-primary font-bold"
+                : "text-primary/70 hover:bg-primary/5",
+            )}
+          >
+            <Settings size={20} /> Configuración
+          </button>
+        </nav>
+
+        <div className="hidden md:block p-4 mt-auto absolute bottom-0 w-full border-t border-primary/10 bg-white">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-red-600 hover:bg-red-50 transition-colors font-medium"
+          >
+            <LogOut size={20} /> Cerrar Sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto h-[calc(100vh-80px)] md:h-screen bg-background">
+        {/* SERVICES TAB */}
+        {activeTab === "SERVICES" && (
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold font-display text-primary">
+                Gestión de Servicios
+              </h2>
+              <button
+                onClick={() => openServiceModal()}
+                className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Plus size={20} /> Nuevo Servicio
+              </button>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
+              {servicesLoading ? (
+                <div className="p-12 text-center">
+                  <Loader2
+                    className="animate-spin mx-auto text-primary mb-4"
+                    size={32}
+                  />
+                  <p className="text-primary/70">Cargando servicios...</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-primary/5 border-b border-primary/10">
+                      <tr>
+                        <th className="px-6 py-4 font-bold text-primary">
+                          Servicio
+                        </th>
+                        <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">
+                          Categoría
+                        </th>
+                        <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">
+                          Precio
+                        </th>
+                        <th className="px-6 py-4 font-bold text-primary text-right">
+                          Acciones
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-primary/5">
+                      {services.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan="4"
+                            className="px-6 py-12 text-center text-primary/60"
+                          >
+                            No hay servicios.
+                          </td>
+                        </tr>
+                      ) : (
+                        services.map((service) => (
+                          <tr
+                            key={service.id}
+                            className="hover:bg-primary/5 transition-colors"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-primary">
+                                {service.name}
+                              </div>
+                              <div className="text-sm text-primary/60 max-w-xs truncate">
+                                {service.description}
+                              </div>
+                              <div className="sm:hidden mt-1 text-xs text-secondary font-bold">
+                                {service.category}
+                              </div>
+                            </td>
+                            <td className="hidden sm:table-cell px-6 py-4">
+                              <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
+                                {service.category}
+                              </span>
+                            </td>
+                            <td className="hidden lg:table-cell px-6 py-4 font-medium text-primary/80">
+                              ${service.price.toLocaleString("es-CL")}
+                            </td>
+                            <td className="px-6 py-4 text-right space-x-2">
+                              <button
+                                onClick={() => openServiceModal(service)}
+                                className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
+                              >
+                                <Pencil size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteService(service.id)}
+                                className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
-          {servicesLoading ? (
-            <div className="p-12 text-center">
-              <Loader2 className="animate-spin mx-auto text-primary mb-4" size={32} />
-              <p className="text-primary/70">Cargando servicios...</p>
+        {/* SUCCESS CASES TAB */}
+        {activeTab === "SUCCESS_CASES" && (
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold font-display text-primary">
+                Casos de Éxito
+              </h2>
+              <button
+                onClick={() => openCaseModal()}
+                className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Plus size={20} /> Nuevo Caso
+              </button>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-primary/5 border-b border-primary/10">
-                  <tr>
-                    <th className="px-6 py-4 font-bold text-primary">Servicio</th>
-                    <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">Categoría</th>
-                    <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">Precio</th>
-                    <th className="px-6 py-4 font-bold text-primary text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-primary/5">
-                  {services.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="px-6 py-12 text-center text-primary/60">
-                        No hay servicios disponibles. Crea uno nuevo para comenzar.
-                      </td>
-                    </tr>
-                  ) : (
-                    services.map((service) => (
-                      <tr key={service.id} className="hover:bg-primary/5 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-primary">{service.name}</div>
-                          <div className="text-sm text-primary/60 max-w-xs truncate">{service.description}</div>
-                          <div className="sm:hidden mt-2">
-                            <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
-                              {service.category}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="hidden sm:table-cell px-6 py-4 align-middle">
-                          <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
-                            {service.category}
-                          </span>
-                        </td>
-                        <td className="hidden lg:table-cell px-6 py-4 font-medium text-primary/80 align-middle">
-                          ${service.price.toLocaleString('es-CL')}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2 align-middle">
-                          <button 
-                            onClick={() => openModal(service)}
-                            className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg transition-colors"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(service.id)}
-                            className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* MODAL */}
-      {isModalOpen && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {successCases.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-xl shadow-md overflow-hidden border border-primary/10 flex flex-col"
+                >
+                  <div className="h-40 bg-gray-200 relative flex">
+                    <div
+                      className="w-1/2 h-full bg-cover bg-center border-r border-white/20"
+                      style={{ backgroundImage: `url(${item.imageBefore})` }}
+                      title="Antes"
+                    ></div>
+                    <div
+                      className="w-1/2 h-full bg-cover bg-center"
+                      style={{ backgroundImage: `url(${item.imageAfter})` }}
+                      title="Después"
+                    ></div>
+                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
+                      Antes
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
+                      Después
+                    </div>
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col">
+                    <h3 className="font-bold text-lg text-primary mb-2">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-primary/70 mb-4 line-clamp-3 flex-1">
+                      {item.description}
+                    </p>
+                    <div className="flex justify-end gap-2 pt-2 border-t border-primary/5">
+                      <button
+                        onClick={() => openCaseModal(item)}
+                        className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCase(item.id)}
+                        className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CONFIG TAB */}
+        {activeTab === "CONFIG" && (
+          <div className="max-w-4xl">
+            <h2 className="text-3xl font-bold font-display text-primary mb-8">
+              Configuración General
+            </h2>
+
+            {successMsg && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+                <CheckCircle size={20} /> {successMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveConfig} className="space-y-8">
+              {/* Contact Info */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                  <Mail size={20} /> Información de Contacto
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Email
+                    </label>
+                    <input
+                      name="email"
+                      defaultValue={siteConfig?.email}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Teléfono
+                    </label>
+                    <input
+                      name="phone"
+                      defaultValue={siteConfig?.phone}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Dirección
+                    </label>
+                    <input
+                      name="address"
+                      defaultValue={siteConfig?.address}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Instagram URL
+                    </label>
+                    <input
+                      name="instagram"
+                      defaultValue={siteConfig?.instagram}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Facebook URL
+                    </label>
+                    <input
+                      name="facebook"
+                      defaultValue={siteConfig?.facebook}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hero Section */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                  <Layout size={20} /> Sección Principal (Hero)
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Título Principal
+                    </label>
+                    <input
+                      name="heroTitle"
+                      defaultValue={siteConfig?.heroTitle}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Subtítulo
+                    </label>
+                    <textarea
+                      name="heroSubtitle"
+                      defaultValue={siteConfig?.heroSubtitle}
+                      rows="2"
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* About Section */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                  <FileText size={20} /> Sección Sobre Mí
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Título
+                    </label>
+                    <input
+                      name="aboutTitle"
+                      defaultValue={siteConfig?.aboutTitle}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Descripción
+                    </label>
+                    <textarea
+                      name="aboutText"
+                      defaultValue={siteConfig?.aboutText}
+                      rows="4"
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-primary/80 mb-1">
+                      Imagen URL
+                    </label>
+                    <input
+                      name="aboutImage"
+                      defaultValue={siteConfig?.aboutImage}
+                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-lg"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    "Guardar Cambios"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </main>
+
+      {/* SERVICE MODAL */}
+      {isServiceModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
             <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
               <h2 className="text-xl font-bold font-display">
-                {currentService ? 'Editar Servicio' : 'Nuevo Servicio'}
+                {currentService ? "Editar Servicio" : "Nuevo Servicio"}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-white/80 hover:text-white">
+              <button
+                onClick={() => setIsServiceModalOpen(false)}
+                className="text-white/80 hover:text-white"
+              >
                 <X size={24} />
               </button>
             </div>
-            
             <form onSubmit={handleSubmitService} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">Nombre</label>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Nombre
+                </label>
                 <input
                   name="name"
                   defaultValue={currentService?.name}
@@ -628,9 +1089,10 @@ export default function Admin() {
                   className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-bold text-primary/80 mb-1">Descripción</label>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Descripción
+                </label>
                 <textarea
                   name="description"
                   defaultValue={currentService?.description}
@@ -638,10 +1100,11 @@ export default function Admin() {
                   className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
                 ></textarea>
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-primary/80 mb-1">Precio</label>
+                  <label className="block text-sm font-bold text-primary/80 mb-1">
+                    Precio
+                  </label>
                   <input
                     name="price"
                     type="number"
@@ -651,10 +1114,12 @@ export default function Admin() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-primary/80 mb-1">Categoría</label>
+                  <label className="block text-sm font-bold text-primary/80 mb-1">
+                    Categoría
+                  </label>
                   <select
                     name="category"
-                    defaultValue={currentService?.category || 'Clínico'}
+                    defaultValue={currentService?.category || "Clínico"}
                     className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-white"
                   >
                     <option value="Clínico">Clínico</option>
@@ -664,21 +1129,112 @@ export default function Admin() {
                   </select>
                 </div>
               </div>
-              
               <div className="pt-4 flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold transition-colors"
+                  onClick={() => setIsServiceModalOpen(false)}
+                  className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2"
+                  className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90"
                 >
-                  {loading ? <Loader2 className="animate-spin" size={18} /> : (currentService ? 'Actualizar' : 'Guardar')}
+                  {loading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : currentService ? (
+                    "Actualizar"
+                  ) : (
+                    "Guardar"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CASE MODAL */}
+      {isCaseModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
+              <h2 className="text-xl font-bold font-display">
+                {currentCase ? "Editar Caso" : "Nuevo Caso"}
+              </h2>
+              <button
+                onClick={() => setIsCaseModalOpen(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitCase} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Título
+                </label>
+                <input
+                  name="title"
+                  defaultValue={currentCase?.title}
+                  required
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Descripción
+                </label>
+                <textarea
+                  name="description"
+                  defaultValue={currentCase?.description}
+                  rows="3"
+                  required
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  URL Imagen Antes
+                </label>
+                <input
+                  name="imageBefore"
+                  defaultValue={currentCase?.imageBefore}
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  URL Imagen Después
+                </label>
+                <input
+                  name="imageAfter"
+                  defaultValue={currentCase?.imageAfter}
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCaseModalOpen(false)}
+                  className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90"
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : currentCase ? (
+                    "Actualizar"
+                  ) : (
+                    "Guardar"
+                  )}
                 </button>
               </div>
             </form>

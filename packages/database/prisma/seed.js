@@ -77,7 +77,50 @@ async function main() {
     },
   });
 
-  console.log('Seed data inserted (Services & Admins: admin/dev)');
+  // Seed SiteConfig
+  await prisma.siteConfig.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      email: 'contacto@podologiaconi.cl',
+      phone: '+56 9 1234 5678',
+      address: 'Av. Providencia 1234, Of. 505',
+      instagram: 'https://instagram.com/podologiaconi',
+      heroTitle: 'Podología Clínica Integral',
+      heroSubtitle: 'Recupera la salud y belleza de tus pies con atención profesional personalizada.',
+      aboutTitle: 'Hola, soy Constanza Cortés',
+      aboutText: 'Podóloga clínica certificada con experiencia en el tratamiento de diversas patologías del pie. Mi compromiso es brindar una atención de calidad, segura y empática.',
+    },
+  });
+
+  // Seed Success Cases (3 placeholders)
+  const countCases = await prisma.successCase.count();
+  if (countCases === 0) {
+    await prisma.successCase.createMany({
+      data: [
+        {
+          title: 'Onicocriptosis Severa',
+          description: 'Paciente con uña encarnada de 3 semanas de evolución. Se realiza espiculectomía y curación avanzada. Recuperación total en 2 semanas.',
+          imageBefore: 'https://images.unsplash.com/photo-1628965942468-b7c4d51624c8?q=80&w=600&auto=format&fit=crop',
+          imageAfter: 'https://images.unsplash.com/photo-1519415387722-a1c3bbef716c?q=80&w=600&auto=format&fit=crop',
+        },
+        {
+          title: 'Reconstrucción Ungueal',
+          description: 'Reconstrucción estética de lámina ungueal traumatizada mediante resina acrílica con antimicótico.',
+          imageBefore: 'https://images.unsplash.com/photo-1632053009581-2296c0952528?q=80&w=600&auto=format&fit=crop',
+          imageAfter: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=600&auto=format&fit=crop',
+        },
+        {
+          title: 'Tratamiento de Durezas',
+          description: 'Eliminación de hiperqueratosis plantar severa y grietas en talones. Hidratación profunda.',
+          imageBefore: 'https://images.unsplash.com/photo-1549488656-d4198c60f269?q=80&w=600&auto=format&fit=crop',
+          imageAfter: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?q=80&w=600&auto=format&fit=crop',
+        },
+      ]
+    });
+  }
+
+  console.log('Seed data inserted (Services, Admins, SiteConfig & SuccessCases)');
 }
 
 main()

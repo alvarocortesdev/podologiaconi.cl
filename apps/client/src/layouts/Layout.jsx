@@ -10,12 +10,15 @@ import {
   Globe,
   Linkedin,
   MessageSquare,
+  Facebook,
 } from "lucide-react";
 import clsx from "clsx";
 
 import { IntroContext } from "../context/IntroContext";
+import { useConfig } from "../context/ConfigContext";
 
 export default function Layout({ children }) {
+  const { config } = useConfig();
   const [isOpen, setIsOpen] = React.useState(false);
   const location = useLocation();
 
@@ -257,29 +260,55 @@ export default function Layout({ children }) {
                   Contacto
                 </h3>
                 <ul className="space-y-3 text-gray-300 text-sm">
-                  <li className="flex items-center gap-3">
-                    <MessageSquare size={18} />{" "}
-                    <a
-                      href="https://wa.me/56989611241"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span>Whatsapp</span>
-                    </a>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Phone size={18} /> <span>+56 9 8961 1241</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Instagram size={18} />
-                    <a
-                      href="https://www.instagram.com/podologia.coni/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <span>@podologia.coni</span>
-                    </a>
-                  </li>
+                  {config?.phone && (
+                    <>
+                      <li className="flex items-center gap-3">
+                        <MessageSquare size={18} />{" "}
+                        <a
+                          href={`https://wa.me/${config.phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-white transition-colors"
+                        >
+                          <span>Whatsapp</span>
+                        </a>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <Phone size={18} /> <span>{config.phone}</span>
+                      </li>
+                    </>
+                  )}
+                  {config?.instagram && (
+                    <li className="flex items-center gap-3">
+                      <Instagram size={18} />
+                      <a
+                        href={config.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                      >
+                        <span>Instagram</span>
+                      </a>
+                    </li>
+                  )}
+                  {config?.facebook && (
+                    <li className="flex items-center gap-3">
+                      <Facebook size={18} />
+                      <a
+                        href={config.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                      >
+                        <span>Facebook</span>
+                      </a>
+                    </li>
+                  )}
+                  {config?.address && (
+                    <li className="flex items-start gap-3 mt-2">
+                      <span>{config.address}</span>
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>

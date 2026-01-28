@@ -3,12 +3,14 @@ import React from "react";
 import { ArrowRight, CheckCircle, Leaf, Stethoscope } from "lucide-react";
 import { Link } from "react-router-dom";
 import { IntroContext } from "../context/IntroContext";
+import { useConfig } from "../context/ConfigContext";
 import clsx from "clsx";
 
 export default function Home() {
   const { introStep } = React.useContext(IntroContext);
+  const { config, successCases } = useConfig();
 
-  const cases = [
+  const defaultCases = [
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso1_x0zqpj.jpg",
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso2_zzp3k2.jpg",
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso3_sthwhb.jpg",
@@ -34,14 +36,16 @@ export default function Home() {
                 Atención Podológica Profesional
               </span>
               <h1 className="text-3xl sm:text-4xl lg:text-6xl font-display font-bold text-primary mt-4 sm:mt-5 mb-4 sm:mb-6 leading-tight">
-                Bienestar y Salud <br />
-                <span className="text-secondary">para tus Pies</span>
+                {config?.heroTitle || (
+                  <>
+                    Bienestar y Salud <br />
+                    <span className="text-secondary">para tus Pies</span>
+                  </>
+                )}
               </h1>
-              <p className="text-base sm:text-lg text-primary/70 mb-6 sm:mb-10 max-w-xl mx-auto lg:mx-0 px-2 sm:px-0">
-                Soy Coni, Podóloga Clínica certificada dedicada a brindar una
-                atención integral y personalizada. Mi objetivo es diagnosticar y
-                tratar las afecciones de tus pies, combinando las mejores
-                técnicas clínicas con un cuidado estético superior.
+              <p className="text-base sm:text-lg text-primary/70 mb-6 sm:mb-10 max-w-xl mx-auto lg:mx-0 px-2 sm:px-0 whitespace-pre-line">
+                {config?.heroSubtitle ||
+                  "Soy Coni, Podóloga Clínica certificada dedicada a brindar una atención integral y personalizada. Mi objetivo es diagnosticar y tratar las afecciones de tus pies, combinando las mejores técnicas clínicas con un cuidado estético superior."}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start px-2 sm:px-0">
                 <Link
@@ -65,7 +69,10 @@ export default function Home() {
               <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-[480px] lg:h-[480px] bg-primary/10 rounded-full p-3 sm:p-4">
                 <div className="w-full h-full rounded-full overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
                   <img
-                    src="https://res.cloudinary.com/peluimages/image/upload/v1769608569/avatar_mdrkl6.png"
+                    src={
+                      config?.aboutImage ||
+                      "https://res.cloudinary.com/peluimages/image/upload/v1769608569/avatar_mdrkl6.png"
+                    }
                     alt="Podóloga Coni - Especialista en cuidado podológico integral"
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -149,8 +156,13 @@ export default function Home() {
               Mi Perfil
             </span>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-primary mt-2">
-              Formación y Trayectoria
+              {config?.aboutTitle || "Formación y Trayectoria"}
             </h2>
+            {config?.aboutText && (
+              <p className="mt-4 text-primary/70 max-w-2xl mx-auto whitespace-pre-line text-sm sm:text-base">
+                {config.aboutText}
+              </p>
+            )}
           </div>
           <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -214,21 +226,29 @@ export default function Home() {
           </div>
 
           <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {cases.map((img, idx) => (
+            {(successCases.length > 0
+              ? successCases
+              : defaultCases.map((url, i) => ({
+                  id: i,
+                  title: `Tratamiento ${i + 1}`,
+                  imageAfter: url,
+                  description: "Ver más",
+                }))
+            ).map((item, idx) => (
               <div
-                key={idx}
+                key={item.id || idx}
                 className="group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg"
               >
                 <img
-                  src={img}
-                  alt={`Caso Clínico ${idx + 1} - Tratamiento podológico profesional`}
+                  src={item.imageAfter}
+                  alt={`${item.title} - Tratamiento podológico`}
                   className="h-64 sm:h-80 w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-4 sm:p-6">
                   <h3 className="text-white text-lg sm:text-xl font-bold">
-                    Tratamiento {idx + 1}
+                    {item.title}
                   </h3>
                   <p className="text-secondary font-semibold text-sm sm:text-base">
                     Ver más
