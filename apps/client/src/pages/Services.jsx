@@ -12,6 +12,9 @@ import SkeletonCard from "../components/SkeletonCard";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const SERVICES_CACHE_KEY = "servicesCache";
+const SERVICES_VERSION_KEY = "servicesVersion";
+
 // Fallback mock data in case API fails
 const mockServices = [
   {
@@ -69,35 +72,53 @@ export default function Services() {
   const [quoteError, setQuoteError] = useState(null);
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const cachedRaw = localStorage.getItem(SERVICES_CACHE_KEY);
+    if (cachedRaw) {
       try {
-        setLoading(true);
-        const response = await fetch("/api/services");
-
-        if (!response.ok) {
-          throw new Error(`Error al cargar servicios: ${response.status}`);
+        const cached = JSON.parse(cachedRaw);
+        if (Array.isArray(cached.services) && cached.services.length > 0) {
+          setServices(cached.services);
+          setLoading(false);
         }
-
-        const data = await response.json();
-
-        // Validate that we received an array
-        if (Array.isArray(data) && data.length > 0) {
-          setServices(data);
-        } else {
-          // If API returns empty array or invalid data, use fallback
-          console.warn("API returned empty or invalid data, using fallback");
-          setServices(mockServices);
-        }
-      } catch (err) {
-        console.error("Error fetching services:", err);
-        // Use fallback mock data if API fails
-        setServices(mockServices);
-      } finally {
-        setLoading(false);
+      } catch {
+        void 0;
       }
-    };
-
-    fetchServices();
+    }
+    (async () => {
+      try {
+        const vres = await fetch("/api/services/version");
+        let serverVersion = null;
+        if (vres.ok) {
+          const vdata = await vres.json();
+          serverVersion = vdata.version;
+        }
+        const localVersion = localStorage.getItem(SERVICES_VERSION_KEY) || "";
+        if (!serverVersion || serverVersion !== localVersion || !cachedRaw) {
+          setLoading(true);
+          const response = await fetch("/api/services");
+          if (!response.ok) {
+            throw new Error(`Error al cargar servicios: ${response.status}`);
+          }
+          const data = await response.json();
+          const servicesData =
+            Array.isArray(data) && data.length > 0 ? data : mockServices;
+          setServices(servicesData);
+          setLoading(false);
+          localStorage.setItem(
+            SERVICES_CACHE_KEY,
+            JSON.stringify({ services: servicesData }),
+          );
+          if (serverVersion) {
+            localStorage.setItem(SERVICES_VERSION_KEY, serverVersion);
+          }
+        }
+      } catch {
+        if (!cachedRaw) {
+          setServices(mockServices);
+          setLoading(false);
+        }
+      }
+    })();
   }, []);
 
   const categories = ["Todos", ...new Set(services.map((s) => s.category))];

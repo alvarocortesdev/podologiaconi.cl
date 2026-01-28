@@ -55,6 +55,20 @@ app.get('/api/services', async (req, res) => {
   }
 });
 
+app.get('/api/services/version', async (req, res) => {
+  try {
+    const latest = await prisma.service.findMany({
+      select: { updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 1
+    });
+    const version = latest[0]?.updatedAt?.toISOString() || 'none';
+    res.json({ version });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching version' });
+  }
+});
+
 // Create a service (Protected)
 app.post('/api/services', authenticateToken, async (req, res) => {
   try {
