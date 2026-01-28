@@ -25,6 +25,7 @@ model Admin {
   username              String    @unique
   password              String
   email                 String?
+  pendingEmail          String?
   isSetup               Boolean   @default(false)
   verificationCode      String?
   verificationCodeExpiresAt DateTime?
@@ -44,9 +45,7 @@ model SiteConfig {
   // Contact Info
   email       String   @default("contacto@podologiaconi.cl")
   phone       String   @default("+56 9 XXXX XXXX")
-  address     String   @default("Consulta en...")
   instagram   String?
-  facebook    String?
   whatsapp    String?
 
   // Hero Section

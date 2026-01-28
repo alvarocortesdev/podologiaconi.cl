@@ -363,6 +363,96 @@ app.delete('/api/success-cases/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Profile: Update Password
+app.put('/api/admin/profile/password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const { username } = req.user;
+    const admin = await prisma.admin.findUnique({ where: { username } });
+    
+    const valid = await bcrypt.compare(currentPassword, admin.password);
+    if (!valid) return res.status(400).json({ error: 'Contraseña actual incorrecta' });
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.admin.update({ where: { username }, data: { password: hashedPassword } });
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar contraseña' });
+  }
+});
+
+// Profile: Request Email Change
+app.post('/api/admin/profile/email-request', authenticateToken, async (req, res) => {
+  try {
+    const { newEmail } = req.body;
+    const { username } = req.user;
+    
+    // Generate code
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+    
+    await prisma.admin.update({
+      where: { username },
+      data: {
+        pendingEmail: newEmail,
+        verificationCode: code,
+        verificationCodeExpiresAt: expiresAt
+      }
+    });
+    
+    // Send email
+    await resend.emails.send({
+      from: 'noreply@podologiaconi.cl',
+      to: [newEmail],
+      subject: 'Código de Verificación - Cambio de Correo',
+      text: `Tu código de validación para cambiar tu correo es: ${code}\n\nEste código expira en 5 minutos.`,
+    });
+    
+    res.json({ message: 'Código de verificación enviado al nuevo correo' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al solicitar cambio de correo' });
+  }
+});
+
+// Profile: Confirm Email Change
+app.post('/api/admin/profile/email-confirm', authenticateToken, async (req, res) => {
+  try {
+    const { code } = req.body;
+    const { username } = req.user;
+    
+    const admin = await prisma.admin.findUnique({ where: { username } });
+    
+    if (!admin.verificationCode || admin.verificationCode !== code) {
+      return res.status(400).json({ error: 'Código inválido' });
+    }
+    
+    if (new Date() > admin.verificationCodeExpiresAt) {
+      return res.status(400).json({ error: 'El código ha expirado' });
+    }
+    
+    if (!admin.pendingEmail) {
+      return res.status(400).json({ error: 'No hay cambio de correo pendiente' });
+    }
+    
+    await prisma.admin.update({
+      where: { username },
+      data: {
+        email: admin.pendingEmail,
+        pendingEmail: null,
+        verificationCode: null,
+        verificationCodeExpiresAt: null
+      }
+    });
+    
+    res.json({ message: 'Correo actualizado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al confirmar cambio de correo' });
+  }
+});
+
 // Export app for Vercel
 module.exports = app;
 

@@ -14,6 +14,8 @@ import {
   Settings,
   Image as ImageIcon,
   FileText,
+  AlertCircle,
+  Globe,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -57,6 +59,10 @@ export default function Admin() {
 
   const [isCaseModalOpen, setIsCaseModalOpen] = useState(false);
   const [currentCase, setCurrentCase] = useState(null);
+
+  // Profile State
+  const [emailStep, setEmailStep] = useState("REQUEST"); // REQUEST | CONFIRM
+  const [pendingEmail, setPendingEmail] = useState("");
 
   useEffect(() => {
     if (token) {
@@ -263,6 +269,96 @@ export default function Admin() {
     setAuthState("LOGIN");
     setUsername("");
     setPassword("");
+  };
+
+  // Profile Handlers
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      if (data.newPassword !== data.confirmPassword)
+        throw new Error("Las contraseñas no coinciden");
+
+      const response = await fetch("/api/admin/profile/password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const res = await response.json();
+        throw new Error(res.error || "Error al actualizar contraseña");
+      }
+      setSuccessMsg("Contraseña actualizada correctamente");
+      e.target.reset();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestEmailChange = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const response = await fetch("/api/admin/profile/email-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newEmail: pendingEmail }),
+      });
+      if (!response.ok) {
+        const res = await response.json();
+        throw new Error(res.error || "Error al solicitar cambio");
+      }
+      setEmailStep("CONFIRM");
+      setSuccessMsg("Código enviado al nuevo correo");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmEmailChange = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const formData = new FormData(e.target);
+      const code = formData.get("code");
+
+      const response = await fetch("/api/admin/profile/email-confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code }),
+      });
+      if (!response.ok) {
+        const res = await response.json();
+        throw new Error(res.error || "Error al confirmar cambio");
+      }
+      setSuccessMsg("Correo actualizado. Por favor inicia sesión nuevamente.");
+      setTimeout(handleLogout, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- CRUD Handlers ---
@@ -668,399 +764,561 @@ export default function Admin() {
 
   // DASHBOARD VIEW
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-b md:border-r border-primary/10 flex-shrink-0 md:h-screen sticky top-0 z-20">
-        <div className="p-6 flex justify-between items-center md:block">
-          <div>
-            <h1 className="text-2xl font-bold font-display text-primary">
-              Admin Panel
-            </h1>
-            <p className="text-xs text-primary/60">v1.0.0</p>
-          </div>
-          <button onClick={handleLogout} className="md:hidden text-primary/70">
-            <LogOut size={20} />
-          </button>
+    <div className="min-h-screen bg-background flex font-sans">
+      {/* Sidebar - Sticky Left */}
+      <aside className="w-64 bg-white border-r border-primary/10 h-screen sticky top-0 flex flex-col z-30 shadow-lg flex-shrink-0">
+        <div className="p-6 border-b border-primary/10">
+          <h1 className="text-xl font-bold font-display text-primary">
+            Panel Admin
+          </h1>
+          <p className="text-xs text-primary/60 mt-1">v1.1.0</p>
         </div>
 
-        <nav className="px-4 pb-4 md:pb-0 flex md:block gap-2 overflow-x-auto md:overflow-visible scrollbar-hide">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
-            onClick={() => setActiveTab("SERVICES")}
+            onClick={() => setActiveTab("CONFIG")}
             className={clsx(
-              "flex items-center gap-3 px-4 py-3 rounded-lg w-full transition-colors whitespace-nowrap",
-              activeTab === "SERVICES"
-                ? "bg-secondary/20 text-primary font-bold"
+              "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+              activeTab === "CONFIG"
+                ? "bg-secondary text-primary shadow-md font-bold"
                 : "text-primary/70 hover:bg-primary/5",
             )}
           >
-            <Layout size={20} /> Servicios
+            <Settings size={20} /> Configuración
           </button>
           <button
             onClick={() => setActiveTab("SUCCESS_CASES")}
             className={clsx(
-              "flex items-center gap-3 px-4 py-3 rounded-lg w-full transition-colors whitespace-nowrap",
+              "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
               activeTab === "SUCCESS_CASES"
-                ? "bg-secondary/20 text-primary font-bold"
+                ? "bg-secondary text-primary shadow-md font-bold"
                 : "text-primary/70 hover:bg-primary/5",
             )}
           >
             <ImageIcon size={20} /> Casos de Éxito
           </button>
           <button
-            onClick={() => setActiveTab("CONFIG")}
+            onClick={() => setActiveTab("SERVICES")}
             className={clsx(
-              "flex items-center gap-3 px-4 py-3 rounded-lg w-full transition-colors whitespace-nowrap",
-              activeTab === "CONFIG"
-                ? "bg-secondary/20 text-primary font-bold"
+              "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+              activeTab === "SERVICES"
+                ? "bg-secondary text-primary shadow-md font-bold"
                 : "text-primary/70 hover:bg-primary/5",
             )}
           >
-            <Settings size={20} /> Configuración
+            <Layout size={20} /> Servicios
+          </button>
+          <button
+            onClick={() => setActiveTab("PROFILE")}
+            className={clsx(
+              "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+              activeTab === "PROFILE"
+                ? "bg-secondary text-primary shadow-md font-bold"
+                : "text-primary/70 hover:bg-primary/5",
+            )}
+          >
+            <Lock size={20} /> Perfil
           </button>
         </nav>
-
-        <div className="hidden md:block p-4 mt-auto absolute bottom-0 w-full border-t border-primary/10 bg-white">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-red-600 hover:bg-red-50 transition-colors font-medium"
-          >
-            <LogOut size={20} /> Cerrar Sesión
-          </button>
-        </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto h-[calc(100vh-80px)] md:h-screen bg-background">
-        {/* SERVICES TAB */}
-        {activeTab === "SERVICES" && (
-          <div>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold font-display text-primary">
-                Gestión de Servicios
-              </h2>
-              <button
-                onClick={() => openServiceModal()}
-                className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Plus size={20} /> Nuevo Servicio
-              </button>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
-              {servicesLoading ? (
-                <div className="p-12 text-center">
-                  <Loader2
-                    className="animate-spin mx-auto text-primary mb-4"
-                    size={32}
-                  />
-                  <p className="text-primary/70">Cargando servicios...</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-primary/5 border-b border-primary/10">
-                      <tr>
-                        <th className="px-6 py-4 font-bold text-primary">
-                          Servicio
-                        </th>
-                        <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">
-                          Categoría
-                        </th>
-                        <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">
-                          Precio
-                        </th>
-                        <th className="px-6 py-4 font-bold text-primary text-right">
-                          Acciones
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-primary/5">
-                      {services.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan="4"
-                            className="px-6 py-12 text-center text-primary/60"
-                          >
-                            No hay servicios.
-                          </td>
-                        </tr>
-                      ) : (
-                        services.map((service) => (
-                          <tr
-                            key={service.id}
-                            className="hover:bg-primary/5 transition-colors"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-primary">
-                                {service.name}
-                              </div>
-                              <div className="text-sm text-primary/60 max-w-xs truncate">
-                                {service.description}
-                              </div>
-                              <div className="sm:hidden mt-1 text-xs text-secondary font-bold">
-                                {service.category}
-                              </div>
-                            </td>
-                            <td className="hidden sm:table-cell px-6 py-4">
-                              <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
-                                {service.category}
-                              </span>
-                            </td>
-                            <td className="hidden lg:table-cell px-6 py-4 font-medium text-primary/80">
-                              ${service.price.toLocaleString("es-CL")}
-                            </td>
-                            <td className="px-6 py-4 text-right space-x-2">
-                              <button
-                                onClick={() => openServiceModal(service)}
-                                className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
-                              >
-                                <Pencil size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteService(service.id)}
-                                className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+      {/* Main Content Wrapper */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="h-20 bg-white border-b border-primary/10 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm">
+          <div className="font-display font-bold text-xl text-primary">
+            PodologíaConi
           </div>
-        )}
-
-        {/* SUCCESS CASES TAB */}
-        {activeTab === "SUCCESS_CASES" && (
-          <div>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold font-display text-primary">
-                Casos de Éxito
-              </h2>
-              <button
-                onClick={() => openCaseModal()}
-                className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Plus size={20} /> Nuevo Caso
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {successCases.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden border border-primary/10 flex flex-col"
-                >
-                  <div className="h-40 bg-gray-200 relative flex">
-                    <div
-                      className="w-1/2 h-full bg-cover bg-center border-r border-white/20"
-                      style={{ backgroundImage: `url(${item.imageBefore})` }}
-                      title="Antes"
-                    ></div>
-                    <div
-                      className="w-1/2 h-full bg-cover bg-center"
-                      style={{ backgroundImage: `url(${item.imageAfter})` }}
-                      title="Después"
-                    ></div>
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
-                      Antes
-                    </div>
-                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
-                      Después
-                    </div>
-                  </div>
-                  <div className="p-4 flex-1 flex flex-col">
-                    <h3 className="font-bold text-lg text-primary mb-2">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-primary/70 mb-4 line-clamp-3 flex-1">
-                      {item.description}
-                    </p>
-                    <div className="flex justify-end gap-2 pt-2 border-t border-primary/5">
-                      <button
-                        onClick={() => openCaseModal(item)}
-                        className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCase(item.id)}
-                        className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center gap-6">
+            <a
+              href="/"
+              target="_blank"
+              className="flex items-center gap-2 text-primary/70 hover:text-secondary font-medium transition-colors"
+            >
+              <Globe size={20} /> Sitio Web
+            </a>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
+            >
+              <LogOut size={20} /> Cerrar Sesión
+            </button>
           </div>
-        )}
+        </header>
 
-        {/* CONFIG TAB */}
-        {activeTab === "CONFIG" && (
-          <div className="max-w-4xl">
-            <h2 className="text-3xl font-bold font-display text-primary mb-8">
-              Configuración General
-            </h2>
-
-            {successMsg && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-                <CheckCircle size={20} /> {successMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleSaveConfig} className="space-y-8">
-              {/* Contact Info */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                  <Mail size={20} /> Información de Contacto
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Email
-                    </label>
-                    <input
-                      name="email"
-                      defaultValue={siteConfig?.email}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Teléfono
-                    </label>
-                    <input
-                      name="phone"
-                      defaultValue={siteConfig?.phone}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Dirección
-                    </label>
-                    <input
-                      name="address"
-                      defaultValue={siteConfig?.address}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Instagram URL
-                    </label>
-                    <input
-                      name="instagram"
-                      defaultValue={siteConfig?.instagram}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Facebook URL
-                    </label>
-                    <input
-                      name="facebook"
-                      defaultValue={siteConfig?.facebook}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Hero Section */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                  <Layout size={20} /> Sección Principal (Hero)
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Título Principal
-                    </label>
-                    <input
-                      name="heroTitle"
-                      defaultValue={siteConfig?.heroTitle}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Subtítulo
-                    </label>
-                    <textarea
-                      name="heroSubtitle"
-                      defaultValue={siteConfig?.heroSubtitle}
-                      rows="2"
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* About Section */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
-                <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                  <FileText size={20} /> Sección Sobre Mí
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Título
-                    </label>
-                    <input
-                      name="aboutTitle"
-                      defaultValue={siteConfig?.aboutTitle}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Descripción
-                    </label>
-                    <textarea
-                      name="aboutText"
-                      defaultValue={siteConfig?.aboutText}
-                      rows="4"
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-primary/80 mb-1">
-                      Imagen URL
-                    </label>
-                    <input
-                      name="aboutImage"
-                      defaultValue={siteConfig?.aboutImage}
-                      className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
+        {/* Main Content */}
+        <main className="flex-1 p-8 bg-background overflow-y-auto">
+          {/* SERVICES TAB */}
+          {activeTab === "SERVICES" && (
+            <div>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-bold font-display text-primary">
+                  Gestión de Servicios
+                </h2>
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-lg"
+                  onClick={() => openServiceModal()}
+                  className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
                 >
-                  {loading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    "Guardar Cambios"
-                  )}
+                  <Plus size={20} /> Nuevo Servicio
                 </button>
               </div>
-            </form>
-          </div>
-        )}
-      </main>
+
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
+                {servicesLoading ? (
+                  <div className="p-12 text-center">
+                    <Loader2
+                      className="animate-spin mx-auto text-primary mb-4"
+                      size={32}
+                    />
+                    <p className="text-primary/70">Cargando servicios...</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="bg-primary/5 border-b border-primary/10">
+                        <tr>
+                          <th className="px-6 py-4 font-bold text-primary">
+                            Servicio
+                          </th>
+                          <th className="hidden sm:table-cell px-6 py-4 font-bold text-primary">
+                            Categoría
+                          </th>
+                          <th className="hidden lg:table-cell px-6 py-4 font-bold text-primary">
+                            Precio
+                          </th>
+                          <th className="px-6 py-4 font-bold text-primary text-right">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-primary/5">
+                        {services.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan="4"
+                              className="px-6 py-12 text-center text-primary/60"
+                            >
+                              No hay servicios.
+                            </td>
+                          </tr>
+                        ) : (
+                          services.map((service) => (
+                            <tr
+                              key={service.id}
+                              className="hover:bg-primary/5 transition-colors"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-primary">
+                                  {service.name}
+                                </div>
+                                <div className="text-sm text-primary/60 max-w-xs truncate">
+                                  {service.description}
+                                </div>
+                                <div className="sm:hidden mt-1 text-xs text-secondary font-bold">
+                                  {service.category}
+                                </div>
+                              </td>
+                              <td className="hidden sm:table-cell px-6 py-4">
+                                <span className="px-3 py-1 text-xs font-bold text-secondary bg-secondary/10 rounded-full">
+                                  {service.category}
+                                </span>
+                              </td>
+                              <td className="hidden lg:table-cell px-6 py-4 font-medium text-primary/80">
+                                ${service.price.toLocaleString("es-CL")}
+                              </td>
+                              <td className="px-6 py-4 text-right space-x-2">
+                                <button
+                                  onClick={() => openServiceModal(service)}
+                                  className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
+                                >
+                                  <Pencil size={18} />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteService(service.id)
+                                  }
+                                  className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SUCCESS CASES TAB */}
+          {activeTab === "SUCCESS_CASES" && (
+            <div>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-bold font-display text-primary">
+                  Casos de Éxito
+                </h2>
+                <button
+                  onClick={() => openCaseModal()}
+                  className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+                >
+                  <Plus size={20} /> Nuevo Caso
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {successCases.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden border border-primary/10 flex flex-col"
+                  >
+                    <div className="h-40 bg-gray-200 relative flex">
+                      <div
+                        className="w-1/2 h-full bg-cover bg-center border-r border-white/20"
+                        style={{ backgroundImage: `url(${item.imageBefore})` }}
+                        title="Antes"
+                      ></div>
+                      <div
+                        className="w-1/2 h-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${item.imageAfter})` }}
+                        title="Después"
+                      ></div>
+                      <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
+                        Antes
+                      </div>
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
+                        Después
+                      </div>
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="font-bold text-lg text-primary mb-2">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-primary/70 mb-4 line-clamp-3 flex-1">
+                        {item.description}
+                      </p>
+                      <div className="flex justify-end gap-2 pt-2 border-t border-primary/5">
+                        <button
+                          onClick={() => openCaseModal(item)}
+                          className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCase(item.id)}
+                          className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CONFIG TAB */}
+          {activeTab === "CONFIG" && (
+            <div className="max-w-4xl">
+              <h2 className="text-3xl font-bold font-display text-primary mb-8">
+                Configuración General
+              </h2>
+
+              {successMsg && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+                  <CheckCircle size={20} /> {successMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveConfig} className="space-y-8">
+                {/* Contact Info */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <Mail size={20} /> Información de Contacto
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Email
+                      </label>
+                      <input
+                        name="email"
+                        defaultValue={siteConfig?.email}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Teléfono
+                      </label>
+                      <input
+                        name="phone"
+                        defaultValue={siteConfig?.phone}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    {/* Address Removed */}
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Instagram URL
+                      </label>
+                      <input
+                        name="instagram"
+                        defaultValue={siteConfig?.instagram}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    {/* Facebook Removed */}
+                  </div>
+                </div>
+
+                {/* Hero Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <Layout size={20} /> Sección Principal (Hero)
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Título Principal
+                      </label>
+                      <input
+                        name="heroTitle"
+                        defaultValue={siteConfig?.heroTitle}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Subtítulo
+                      </label>
+                      <textarea
+                        name="heroSubtitle"
+                        defaultValue={siteConfig?.heroSubtitle}
+                        rows="2"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* About Section */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <FileText size={20} /> Sección Sobre Mí
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Título
+                      </label>
+                      <input
+                        name="aboutTitle"
+                        defaultValue={siteConfig?.aboutTitle}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Descripción
+                      </label>
+                      <textarea
+                        name="aboutText"
+                        defaultValue={siteConfig?.aboutText}
+                        rows="4"
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Imagen URL
+                      </label>
+                      <input
+                        name="aboutImage"
+                        defaultValue={siteConfig?.aboutImage}
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-lg"
+                  >
+                    {loading ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Guardar Cambios"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* PROFILE TAB */}
+          {activeTab === "PROFILE" && (
+            <div className="max-w-4xl">
+              <h2 className="text-3xl font-bold font-display text-primary mb-8">
+                Mi Perfil
+              </h2>
+
+              {successMsg && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+                  <CheckCircle size={20} /> {successMsg}
+                </div>
+              )}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+                  <AlertCircle size={20} /> {error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Change Password */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <Key size={20} /> Cambiar Contraseña
+                  </h3>
+                  <form onSubmit={handleUpdatePassword} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Contraseña Actual
+                      </label>
+                      <input
+                        type="password"
+                        name="currentPassword"
+                        required
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        name="newPassword"
+                        required
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-primary/80 mb-1">
+                        Confirmar Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        required
+                        className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+                    >
+                      {loading ? (
+                        <Loader2 className="animate-spin mx-auto" />
+                      ) : (
+                        "Actualizar Contraseña"
+                      )}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Change Email */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
+                  <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <Mail size={20} /> Cambiar Correo
+                  </h3>
+                  {emailStep === "REQUEST" ? (
+                    <form
+                      onSubmit={handleRequestEmailChange}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="block text-sm font-bold text-primary/80 mb-1">
+                          Nuevo Correo
+                        </label>
+                        <input
+                          type="email"
+                          value={pendingEmail}
+                          onChange={(e) => setPendingEmail(e.target.value)}
+                          required
+                          placeholder="nuevo@correo.com"
+                          className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={loading || !pendingEmail}
+                        className="w-full py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+                      >
+                        {loading ? (
+                          <Loader2 className="animate-spin mx-auto" />
+                        ) : (
+                          "Solicitar Cambio"
+                        )}
+                      </button>
+                    </form>
+                  ) : (
+                    <form
+                      onSubmit={handleConfirmEmailChange}
+                      className="space-y-4"
+                    >
+                      <p className="text-sm text-primary/70">
+                        Hemos enviado un código a{" "}
+                        <strong>{pendingEmail}</strong>. Ingrésalo para
+                        confirmar.
+                      </p>
+                      <div>
+                        <label className="block text-sm font-bold text-primary/80 mb-1">
+                          Código (8 dígitos)
+                        </label>
+                        <input
+                          name="code"
+                          maxLength={8}
+                          required
+                          className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none font-mono text-center tracking-widest uppercase"
+                          placeholder="XXXXXXXX"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEmailStep("REQUEST")}
+                          className="flex-1 py-2.5 bg-gray-100 text-primary font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="flex-1 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+                        >
+                          {loading ? (
+                            <Loader2 className="animate-spin mx-auto" />
+                          ) : (
+                            "Confirmar"
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
 
       {/* SERVICE MODAL */}
       {isServiceModalOpen && (
