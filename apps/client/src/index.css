@@ -27,3 +27,7 @@ h1, h2, h3, h4 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
