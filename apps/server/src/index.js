@@ -127,9 +127,12 @@ app.post('/api/quote', async (req, res) => {
     }
 
     // Send email via Resend
+    const fromAddress = process.env.MAIL_FROM || 'Cotización Web <contacto@podologiaconi.cl>';
+    const toAddresses = process.env.MAIL_TO ? process.env.MAIL_TO.split(',') : ['podologiaconi@outlook.com', 'constanza.cortes9@gmail.com'];
+    
     const { data, error } = await resend.emails.send({
-      from: 'Cotización Web <contacto@podologiaconi.cl>',
-      to: ['podologiaconi@outlook.com', 'constanza.cortes9@gmail.com'],
+      from: fromAddress,
+      to: toAddresses,
       subject: `Cliente: ${name}`,
       text: `Nombre: ${name}\n${emailLine}Teléfono: ${phone}\n\nServicios Seleccionados:\n${serviceList}`,
     });

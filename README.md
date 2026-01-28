@@ -89,6 +89,33 @@ Ver archivo `.env.example` para el template completo. Variables necesarias:
 - `DIRECT_URL`: PostgreSQL direct connection string
 - `RESEND_API_KEY`: API key de Resend para envío de emails
 - `SECRET_KEY`: Clave secreta para firmar tokens JWT
+- `MAIL_FROM`: (Opcional) Dirección del remitente (default: Cotización Web <contacto@podologiaconi.cl>)
+- `MAIL_TO`: (Opcional) Correos de destino separados por coma (default: correos internos)
+
+## Seguridad
+
+Este proyecto sigue buenas prácticas de seguridad y metodologías estándar de la industria:
+
+1.  **The Twelve-Factor App (Configuración)**:
+    -   Todas las credenciales, claves de API y configuraciones sensibles se manejan exclusivamente a través de variables de entorno (`.env`).
+    -   El código fuente no contiene secretos hardcodeados, lo que permite que el repositorio sea público sin riesgos de seguridad.
+
+2.  **Autenticación y Cifrado**:
+    -   **JWT (JSON Web Tokens)**: Utilizado para la autenticación de sesiones administrativas sin estado (stateless).
+    -   **Bcrypt**: Empleado para el hasheo robusto de contraseñas antes de su almacenamiento en la base de datos. Las contraseñas nunca se guardan en texto plano.
+
+3.  **Protección de Datos de Contacto**:
+    -   Las direcciones de correo electrónico de administración y notificaciones están abstraídas en la configuración, evitando que sean scrapecadas por bots si el repositorio es público.
+
+4.  **Control de Acceso**:
+    -   Middleware de autenticación estricto en el backend para proteger endpoints sensibles (creación, edición y eliminación de servicios).
+    -   Configuración de **CORS** (Cross-Origin Resource Sharing) para limitar el acceso a la API solo a orígenes permitidos.
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT.
+
+Copyright (c) 2026 Alvaro "Pelusa" Cortés - alvaro.cortes.dev@outlook.com - github.com/alvarocortesdev
 
 ## Deployment en Vercel
 
