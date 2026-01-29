@@ -1443,7 +1443,7 @@ export default function Admin() {
 
           {/* CONFIG TAB */}
           {activeTab === "CONFIG" && (
-            <div className="max-w-4xl w-full min-w-0">
+            <div className="max-w-4xl w-full min-w-0 overflow-x-hidden">
               <h2 className="text-2xl sm:text-3xl font-bold font-display text-primary mb-8">
                 Configuración General
               </h2>
@@ -1456,7 +1456,7 @@ export default function Admin() {
 
               <form
                 onSubmit={handleSaveConfig}
-                className="space-y-8 w-full min-w-0"
+                className="space-y-8 w-full min-w-0 overflow-x-hidden"
               >
                 {/* Hero Section */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
@@ -1556,7 +1556,7 @@ export default function Admin() {
                         </button>
                       </div>
 
-                      <div className="bg-gray-50 p-4 rounded-xl border border-primary/5 min-h-[100px]">
+                      <div className="bg-gray-50 p-4 rounded-xl border border-primary/5 min-h-[100px] overflow-x-hidden">
                         {aboutCards.length === 0 ? (
                           <div className="text-center text-primary/40 text-sm py-4">
                             No hay tarjetas. Agrega una nueva.
