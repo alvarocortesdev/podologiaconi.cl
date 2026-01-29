@@ -253,9 +253,16 @@ app.get('/api/services/version', async (req, res) => {
 // Create a service (Protected)
 app.post('/api/services', authenticateToken, async (req, res) => {
   try {
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, isVisible, showPrice } = req.body;
     const service = await prisma.service.create({
-      data: { name, description, price: parseFloat(price), category },
+      data: {
+        name,
+        description,
+        price: parseFloat(price),
+        category,
+        isVisible: isVisible !== undefined ? isVisible : true,
+        showPrice: showPrice !== undefined ? showPrice : true
+      },
     });
     res.json(service);
   } catch (error) {
@@ -267,13 +274,23 @@ app.post('/api/services', authenticateToken, async (req, res) => {
 app.put('/api/services/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, isVisible, showPrice } = req.body;
+
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description;
+    if (price !== undefined) data.price = parseFloat(price);
+    if (category !== undefined) data.category = category;
+    if (isVisible !== undefined) data.isVisible = isVisible;
+    if (showPrice !== undefined) data.showPrice = showPrice;
+
     const service = await prisma.service.update({
       where: { id: parseInt(id) },
-      data: { name, description, price: parseFloat(price), category },
+      data,
     });
     res.json(service);
   } catch (error) {
+    console.error('Error updating service:', error);
     res.status(500).json({ error: 'Error updating service' });
   }
 });
@@ -348,11 +365,20 @@ app.get('/api/config', async (req, res) => {
 // Update Site Config (Protected)
 app.put('/api/config', authenticateToken, async (req, res) => {
   try {
-    const data = req.body;
-    // Remove id/updatedAt/aboutCards if present (handle cards via dedicated endpoints)
-    delete data.id;
-    delete data.updatedAt;
-    delete data.aboutCards;
+    const {
+      email, phone, instagram, whatsapp,
+      heroTagline, heroTitle, heroSubtitle, heroButtonText,
+      aboutTitle, aboutText, aboutImage, showPrices
+    } = req.body;
+
+    const data = {
+      email, phone, instagram, whatsapp,
+      heroTagline, heroTitle, heroSubtitle, heroButtonText,
+      aboutTitle, aboutText, aboutImage, showPrices
+    };
+
+    // Remove undefined keys
+    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     // Fetch current config to check for image changes
     const currentConfig = await prisma.siteConfig.findUnique({ where: { id: 1 } });
@@ -368,7 +394,7 @@ app.put('/api/config', authenticateToken, async (req, res) => {
     });
     res.json(config);
   } catch (error) {
-    console.error(error);
+    console.error('Error updating config:', error);
     res.status(500).json({ error: 'Error updating config' });
   }
 });
@@ -496,9 +522,15 @@ app.get('/api/success-cases', async (req, res) => {
 // Create Success Case (Protected)
 app.post('/api/success-cases', authenticateToken, async (req, res) => {
   try {
-    const { title, description, imageBefore, imageAfter } = req.body;
+    const { title, description, imageBefore, imageAfter, isVisible } = req.body;
     const newCase = await prisma.successCase.create({
-      data: { title, description, imageBefore, imageAfter }
+      data: {
+        title,
+        description,
+        imageBefore,
+        imageAfter,
+        isVisible: isVisible !== undefined ? isVisible : true
+      }
     });
     res.json(newCase);
   } catch (error) {
@@ -510,7 +542,7 @@ app.post('/api/success-cases', authenticateToken, async (req, res) => {
 app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, imageBefore, imageAfter } = req.body;
+    const { title, description, imageBefore, imageAfter, isVisible } = req.body;
 
     // Fetch current case to check for image changes
     const currentCase = await prisma.successCase.findUnique({ where: { id: parseInt(id) } });
@@ -524,12 +556,20 @@ app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
       }
     }
 
+    const data = {};
+    if (title !== undefined) data.title = title;
+    if (description !== undefined) data.description = description;
+    if (imageBefore !== undefined) data.imageBefore = imageBefore;
+    if (imageAfter !== undefined) data.imageAfter = imageAfter;
+    if (isVisible !== undefined) data.isVisible = isVisible;
+
     const updatedCase = await prisma.successCase.update({
       where: { id: parseInt(id) },
-      data: { title, description, imageBefore, imageAfter }
+      data
     });
     res.json(updatedCase);
   } catch (error) {
+    console.error('Error updating success case:', error);
     res.status(500).json({ error: 'Error updating success case' });
   }
 });
