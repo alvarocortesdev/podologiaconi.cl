@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ImageUpload from "../components/ImageUpload";
 import SortableCard from "../components/SortableCard";
 import {
@@ -107,27 +107,7 @@ export default function Admin() {
   const [emailStep, setEmailStep] = useState("REQUEST"); // REQUEST | CONFIRM
   const [pendingEmail, setPendingEmail] = useState("");
 
-  useEffect(() => {
-    if (token) {
-      setAuthState("DASHBOARD");
-      fetchAllData();
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (siteConfig?.aboutImage) {
-      setConfigAboutImage(siteConfig.aboutImage);
-    }
-  }, [siteConfig]);
-
-  const fetchAllData = () => {
-    fetchServices();
-    fetchConfig();
-    fetchSuccessCases();
-    fetchAboutCards();
-  };
-
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       setServicesLoading(true);
       const response = await fetch("/api/services");
@@ -138,34 +118,54 @@ export default function Admin() {
     } finally {
       setServicesLoading(false);
     }
-  };
+  }, []);
 
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       const response = await fetch("/api/config");
       if (response.ok) setSiteConfig(await response.json());
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const fetchSuccessCases = async () => {
+  const fetchSuccessCases = useCallback(async () => {
     try {
       const response = await fetch("/api/success-cases");
       if (response.ok) setSuccessCases(await response.json());
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const fetchAboutCards = async () => {
+  const fetchAboutCards = useCallback(async () => {
     try {
       const response = await fetch("/api/about-cards");
       if (response.ok) setAboutCards(await response.json());
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
+
+  const fetchAllData = useCallback(() => {
+    fetchServices();
+    fetchConfig();
+    fetchSuccessCases();
+    fetchAboutCards();
+  }, [fetchServices, fetchConfig, fetchSuccessCases, fetchAboutCards]);
+
+  useEffect(() => {
+    if (token) {
+      setAuthState("DASHBOARD");
+      fetchAllData();
+    }
+  }, [token, fetchAllData]);
+
+  useEffect(() => {
+    if (siteConfig?.aboutImage) {
+      setConfigAboutImage(siteConfig.aboutImage);
+    }
+  }, [siteConfig]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -1035,7 +1035,7 @@ export default function Admin() {
 
   // DASHBOARD VIEW
   return (
-    <div className="min-h-screen bg-background flex font-sans">
+    <div className="min-h-screen bg-background flex font-sans overflow-x-hidden">
       <aside className="hidden md:flex w-64 bg-white border-r border-primary/10 h-screen sticky top-0 flex-col z-30 shadow-lg flex-shrink-0">
         <div className="p-6 border-b border-primary/10">
           <h1 className="text-xl font-bold font-display text-primary">
@@ -1093,104 +1093,105 @@ export default function Admin() {
 
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="h-16 sm:h-20 bg-white border-b border-primary/10 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
-          <div className="font-display font-bold text-lg sm:text-xl text-primary">
-            Admin v.1.2.0
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            <a
-              href="/"
-              target="_blank"
-              className="flex items-center gap-2 text-primary/70 hover:text-secondary font-medium transition-colors"
-            >
-              <Globe size={20} /> Sitio Web
-            </a>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
-            >
-              <LogOut size={20} /> Cerrar Sesión
-            </button>
-          </div>
-          <div className="flex md:hidden items-center gap-2">
-            <a
-              href="/"
-              target="_blank"
-              className="p-2 rounded-lg text-primary/70 hover:text-secondary hover:bg-secondary/10 transition-colors"
-              aria-label="Ir al sitio web"
-            >
-              <Globe size={20} />
-            </a>
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-              aria-label="Cerrar sesión"
-            >
-              <LogOut size={20} />
-            </button>
-            <button
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-              className="p-2 rounded-lg text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors"
-              aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
-            >
-              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
-        </header>
+        <div className="sticky top-0 z-30 relative bg-white">
+          <header className="h-16 sm:h-20 border-b border-primary/10 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm">
+            <div className="font-display font-bold text-lg sm:text-xl text-primary">
+              Admin v.1.2.0
+            </div>
+            <div className="hidden md:flex items-center gap-6">
+              <a
+                href="/"
+                target="_blank"
+                className="flex items-center gap-2 text-primary/70 hover:text-secondary font-medium transition-colors"
+              >
+                <Globe size={20} /> Sitio Web
+              </a>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
+              >
+                <LogOut size={20} /> Cerrar Sesión
+              </button>
+            </div>
+            <div className="flex md:hidden items-center gap-2">
+              <a
+                href="/"
+                target="_blank"
+                className="p-2 rounded-lg text-primary/70 hover:text-secondary hover:bg-secondary/10 transition-colors"
+                aria-label="Ir al sitio web"
+              >
+                <Globe size={20} />
+              </a>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                aria-label="Cerrar sesión"
+              >
+                <LogOut size={20} />
+              </button>
+              <button
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                className="p-2 rounded-lg text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors"
+                aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              >
+                {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
+          </header>
 
-        <div
-          className={clsx(
-            "md:hidden border-b border-primary/10 bg-white px-4 pb-4",
-            isMobileMenuOpen ? "block" : "hidden",
-          )}
-        >
-          <nav className="pt-4 space-y-2">
-            <button
-              onClick={() => handleTabChange("CONFIG")}
-              className={clsx(
-                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
-                activeTab === "CONFIG"
-                  ? "bg-secondary text-primary shadow-md font-bold"
-                  : "text-primary/70 hover:bg-primary/5",
-              )}
-            >
-              <Settings size={20} /> Configuración
-            </button>
-            <button
-              onClick={() => handleTabChange("SUCCESS_CASES")}
-              className={clsx(
-                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
-                activeTab === "SUCCESS_CASES"
-                  ? "bg-secondary text-primary shadow-md font-bold"
-                  : "text-primary/70 hover:bg-primary/5",
-              )}
-            >
-              <ImageIcon size={20} /> Casos de Éxito
-            </button>
-            <button
-              onClick={() => handleTabChange("SERVICES")}
-              className={clsx(
-                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
-                activeTab === "SERVICES"
-                  ? "bg-secondary text-primary shadow-md font-bold"
-                  : "text-primary/70 hover:bg-primary/5",
-              )}
-            >
-              <Layout size={20} /> Servicios
-            </button>
-            <button
-              onClick={() => handleTabChange("PROFILE")}
-              className={clsx(
-                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
-                activeTab === "PROFILE"
-                  ? "bg-secondary text-primary shadow-md font-bold"
-                  : "text-primary/70 hover:bg-primary/5",
-              )}
-            >
-              <Lock size={20} /> Perfil
-            </button>
-          </nav>
+          <div
+            className={clsx(
+              "md:hidden absolute left-0 right-0 top-full border-b border-primary/10 bg-white px-4 pb-4 shadow-lg",
+              isMobileMenuOpen ? "block" : "hidden",
+            )}
+          >
+            <nav className="pt-4 space-y-2">
+              <button
+                onClick={() => handleTabChange("CONFIG")}
+                className={clsx(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                  activeTab === "CONFIG"
+                    ? "bg-secondary text-primary shadow-md font-bold"
+                    : "text-primary/70 hover:bg-primary/5",
+                )}
+              >
+                <Settings size={20} /> Configuración
+              </button>
+              <button
+                onClick={() => handleTabChange("SUCCESS_CASES")}
+                className={clsx(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                  activeTab === "SUCCESS_CASES"
+                    ? "bg-secondary text-primary shadow-md font-bold"
+                    : "text-primary/70 hover:bg-primary/5",
+                )}
+              >
+                <ImageIcon size={20} /> Casos de Éxito
+              </button>
+              <button
+                onClick={() => handleTabChange("SERVICES")}
+                className={clsx(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                  activeTab === "SERVICES"
+                    ? "bg-secondary text-primary shadow-md font-bold"
+                    : "text-primary/70 hover:bg-primary/5",
+                )}
+              >
+                <Layout size={20} /> Servicios
+              </button>
+              <button
+                onClick={() => handleTabChange("PROFILE")}
+                className={clsx(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                  activeTab === "PROFILE"
+                    ? "bg-secondary text-primary shadow-md font-bold"
+                    : "text-primary/70 hover:bg-primary/5",
+                )}
+              >
+                <Lock size={20} /> Perfil
+              </button>
+            </nav>
+          </div>
         </div>
 
         {/* Main Content */}
@@ -1279,9 +1280,6 @@ export default function Admin() {
                                 <div className="font-bold text-primary">
                                   {service.name}
                                 </div>
-                                <div className="text-sm text-primary/60 max-w-xs truncate">
-                                  {service.description}
-                                </div>
                                 <div className="sm:hidden mt-1 text-xs text-secondary font-bold">
                                   {service.category}
                                 </div>
@@ -1294,43 +1292,45 @@ export default function Admin() {
                               <td className="hidden lg:table-cell px-6 py-4 font-medium text-primary/80">
                                 ${service.price.toLocaleString("es-CL")}
                               </td>
-                              <td className="px-6 py-4 text-right space-x-2">
-                                <button
-                                  onClick={() =>
-                                    toggleServiceVisibility(service)
-                                  }
-                                  className={clsx(
-                                    "p-2 rounded-lg",
-                                    service.isVisible
-                                      ? "text-green-600 bg-green-50 hover:bg-green-100"
-                                      : "text-gray-400 bg-gray-50 hover:bg-gray-100",
-                                  )}
-                                  title={
-                                    service.isVisible
-                                      ? "Ocultar Servicio"
-                                      : "Mostrar Servicio"
-                                  }
-                                >
-                                  {service.isVisible ? (
-                                    <Eye size={18} />
-                                  ) : (
-                                    <EyeOff size={18} />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => openServiceModal(service)}
-                                  className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
-                                >
-                                  <Pencil size={18} />
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteService(service.id)
-                                  }
-                                  className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex flex-col items-end gap-2">
+                                  <button
+                                    onClick={() =>
+                                      toggleServiceVisibility(service)
+                                    }
+                                    className={clsx(
+                                      "p-2 rounded-lg",
+                                      service.isVisible
+                                        ? "text-green-600 bg-green-50 hover:bg-green-100"
+                                        : "text-gray-400 bg-gray-50 hover:bg-gray-100",
+                                    )}
+                                    title={
+                                      service.isVisible
+                                        ? "Ocultar Servicio"
+                                        : "Mostrar Servicio"
+                                    }
+                                  >
+                                    {service.isVisible ? (
+                                      <Eye size={18} />
+                                    ) : (
+                                      <EyeOff size={18} />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => openServiceModal(service)}
+                                    className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
+                                  >
+                                    <Pencil size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteService(service.id)
+                                    }
+                                    className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))
@@ -1789,8 +1789,8 @@ export default function Admin() {
 
       {/* SERVICE MODAL */}
       {isServiceModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
               <h2 className="text-xl font-bold font-display">
                 {currentService ? "Editar Servicio" : "Nuevo Servicio"}
@@ -1802,7 +1802,10 @@ export default function Admin() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSubmitService} className="p-6 space-y-4">
+            <form
+              onSubmit={handleSubmitService}
+              className="p-6 space-y-4 overflow-y-auto flex-1"
+            >
               <div>
                 <label className="block text-sm font-bold text-primary/80 mb-1">
                   Nombre
@@ -1825,53 +1828,51 @@ export default function Admin() {
                   className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
                 ></textarea>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-primary/80 mb-1">
-                    Precio
-                  </label>
-                  <input
-                    name="price"
-                    type="number"
-                    defaultValue={currentService?.price}
-                    required
-                    className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
-                  />
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      name="showPrice"
-                      id="showPrice"
-                      defaultChecked={
-                        currentService ? currentService.showPrice : true
-                      }
-                      className="w-4 h-4 text-secondary rounded border-gray-300 focus:ring-secondary"
-                    />
-                    <label
-                      htmlFor="showPrice"
-                      className="text-sm text-primary/70 cursor-pointer select-none"
-                    >
-                      Mostrar precio públicamente
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-primary/80 mb-1">
-                    Categoría
-                  </label>
-                  <select
-                    name="category"
-                    defaultValue={currentService?.category || "Clínico"}
-                    className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-white"
-                  >
-                    <option value="Clínico">Clínico</option>
-                    <option value="Estético">Estético</option>
-                    <option value="Ortopedia">Ortopedia</option>
-                    <option value="Bienestar">Bienestar</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Precio
+                </label>
+                <input
+                  name="price"
+                  type="number"
+                  defaultValue={currentService?.price}
+                  required
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
+                />
               </div>
-              <div className="pt-4 flex justify-end gap-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="showPrice"
+                  id="showPrice"
+                  defaultChecked={
+                    currentService ? currentService.showPrice : true
+                  }
+                  className="w-4 h-4 text-secondary rounded border-gray-300 focus:ring-secondary"
+                />
+                <label
+                  htmlFor="showPrice"
+                  className="text-sm text-primary/70 cursor-pointer select-none"
+                >
+                  Mostrar precio públicamente
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-primary/80 mb-1">
+                  Categoría
+                </label>
+                <select
+                  name="category"
+                  defaultValue={currentService?.category || "Clínico"}
+                  className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none bg-white"
+                >
+                  <option value="Clínico">Clínico</option>
+                  <option value="Estético">Estético</option>
+                  <option value="Ortopedia">Ortopedia</option>
+                  <option value="Bienestar">Bienestar</option>
+                </select>
+              </div>
+              <div className="pt-4 flex justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setIsServiceModalOpen(false)}
@@ -1900,8 +1901,8 @@ export default function Admin() {
 
       {/* CASE MODAL */}
       {isCaseModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden my-8">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto flex items-start sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden my-6 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
               <h2 className="text-xl font-bold font-display">
                 {currentCase ? "Editar Caso" : "Nuevo Caso"}
@@ -1913,7 +1914,10 @@ export default function Admin() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleSubmitCase} className="p-6">
+            <form
+              onSubmit={handleSubmitCase}
+              className="p-6 overflow-y-auto flex-1"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column: Info */}
                 <div className="space-y-4">

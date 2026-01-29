@@ -3,7 +3,7 @@ export const createImage = (url) =>
     const image = new Image()
     image.addEventListener('load', () => resolve(image))
     image.addEventListener('error', (error) => reject(error))
-    image.setAttribute('crossOrigin', 'anonymous') 
+    image.setAttribute('crossOrigin', 'anonymous')
     image.src = url
   })
 
@@ -66,7 +66,7 @@ export default async function getCroppedImg(
 
   ctx.putImageData(data, 0, 0)
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     canvas.toBlob((file) => {
       resolve(file)
     }, 'image/jpeg')

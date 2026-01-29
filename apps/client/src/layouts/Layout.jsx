@@ -14,7 +14,7 @@ import {
 import clsx from "clsx";
 
 import { IntroContext } from "../context/IntroContext";
-import { useConfig } from "../context/ConfigContext";
+import { useConfig } from "../context/configContext";
 
 export default function Layout({ children }) {
   const { config } = useConfig();

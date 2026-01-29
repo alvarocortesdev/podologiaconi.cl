@@ -3,7 +3,7 @@ import React from "react";
 import { ArrowRight, CheckCircle, Leaf, Stethoscope, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { IntroContext } from "../context/IntroContext";
-import { useConfig } from "../context/ConfigContext";
+import { useConfig } from "../context/configContext";
 import clsx from "clsx";
 
 export default function Home() {
