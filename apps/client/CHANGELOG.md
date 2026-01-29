@@ -33,3 +33,6 @@
 - Ajusta CSP para permitir Google Fonts.
 - Añade Cache-Control para HTML y API.
 - Elimina preload del hero para evitar warning de consola.
+## [0.9.0] - 2026-01-29
+
+- Lazy load de rutas para reducir JS inicial en mobile.
