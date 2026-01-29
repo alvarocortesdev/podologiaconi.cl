@@ -14,12 +14,28 @@ import {
 import clsx from "clsx";
 
 import { IntroContext } from "../context/IntroContext";
-import { useConfig } from "../context/configContext";
+import { useConfig } from "../context/configContextBase";
 
 export default function Layout({ children }) {
   const { config } = useConfig();
   const [isOpen, setIsOpen] = React.useState(false);
   const location = useLocation();
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const canonicalUrl = `${window.location.origin}${location.pathname}${location.search}`;
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement("link");
+      canonicalLink.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.setAttribute("href", canonicalUrl);
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute("content", canonicalUrl);
+    }
+  }, [location.pathname, location.search]);
 
   const [introStep, setIntroStep] = React.useState(() => {
     if (typeof window !== "undefined") {

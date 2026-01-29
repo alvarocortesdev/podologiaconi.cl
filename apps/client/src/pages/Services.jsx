@@ -7,7 +7,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import { useConfig } from "../context/configContext";
+import { useConfig } from "../context/configContextBase";
 import clsx from "clsx";
 import SkeletonCard from "../components/SkeletonCard";
 import { ToastContainer } from "react-toastify";

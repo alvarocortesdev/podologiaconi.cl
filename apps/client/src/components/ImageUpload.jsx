@@ -48,7 +48,7 @@ export default function ImageUpload({ value, onChange, label }) {
 
       const data = await response.json();
       console.log("Upload success, data:", data);
-      onChange(data.url);
+      onChange(data.optimizedUrl || data.url);
       setPreviewUrl(null);
       setFileToUpload(null);
       setImageSrc(null);

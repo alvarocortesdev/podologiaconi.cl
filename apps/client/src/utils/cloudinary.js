@@ -5,6 +5,7 @@ export const isCloudinaryUrl = (url) =>
 
 export const buildCloudinaryUrl = (url, options = {}) => {
   if (!isCloudinaryUrl(url)) return url;
+  const normalizedUrl = url.replace("/upload//", "/upload/");
   const {
     width,
     quality = "auto",
@@ -12,17 +13,20 @@ export const buildCloudinaryUrl = (url, options = {}) => {
     crop = "fill",
     dpr = "auto",
   } = options;
-  const parts = url.split("/upload/");
+  const parts = normalizedUrl.split("/upload/");
   if (parts.length < 2) return url;
-  if (
-    parts[1].startsWith("f_") ||
-    parts[1].startsWith("q_") ||
-    parts[1].startsWith("w_") ||
-    parts[1].startsWith("c_") ||
-    parts[1].startsWith("dpr_")
-  ) {
-    return url;
-  }
+  const remainder = parts[1];
+  const segments = remainder.split("/");
+  const firstSegment = segments[0];
+  const hasTransform =
+    firstSegment.includes("f_") ||
+    firstSegment.includes("q_") ||
+    firstSegment.includes("w_") ||
+    firstSegment.includes("c_") ||
+    firstSegment.includes("dpr_") ||
+    firstSegment.includes("g_");
+  const assetPath = hasTransform ? segments.slice(1).join("/") : remainder;
+  if (!assetPath) return url;
   const params = [
     `f_${format}`,
     `q_${quality}`,
@@ -30,7 +34,7 @@ export const buildCloudinaryUrl = (url, options = {}) => {
     `dpr_${dpr}`,
   ];
   if (width) params.push(`w_${width}`);
-  return `${parts[0]}/upload/${params.join(",")}/${parts[1]}`;
+  return `${parts[0]}/upload/${params.join(",")}/${assetPath}`;
 };
 
 export const buildCloudinarySrcSet = (url, widths = []) => {

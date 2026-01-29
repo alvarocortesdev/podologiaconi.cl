@@ -3,7 +3,7 @@ import React from "react";
 import { ArrowRight, CheckCircle, Leaf, Stethoscope, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { IntroContext } from "../context/IntroContext";
-import { useConfig } from "../context/configContext";
+import { useConfig } from "../context/configContextBase";
 import clsx from "clsx";
 import DOMPurify from "dompurify";
 import { buildCloudinarySrcSet, buildCloudinaryUrl } from "../utils/cloudinary";
@@ -53,21 +53,6 @@ export default function Home() {
     heroImage,
     [256, 320, 480, 640, 960],
   );
-
-  React.useEffect(() => {
-    if (!heroImage) return;
-    const existing = document.querySelector('link[data-preload-hero="true"]');
-    if (existing) existing.remove();
-    const link = document.createElement("link");
-    link.rel = "preload";
-    link.as = "image";
-    link.href = buildCloudinaryUrl(heroImage, { width: 960 });
-    link.setAttribute("data-preload-hero", "true");
-    document.head.appendChild(link);
-    return () => {
-      link.remove();
-    };
-  }, [heroImage]);
 
   return (
     <div className="pb-16 sm:pb-24">

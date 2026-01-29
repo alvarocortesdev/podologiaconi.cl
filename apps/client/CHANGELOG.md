@@ -25,3 +25,11 @@
 
 - Genera URLs responsivas para imágenes Cloudinary.
 - Precarga del hero y srcset en casos de éxito.
+## [0.7.0] - 2026-01-29
+
+- Canonical dinámico por ruta para SEO en SPA.
+## [0.8.0] - 2026-01-29
+
+- Ajusta CSP para permitir Google Fonts.
+- Añade Cache-Control para HTML y API.
+- Elimina preload del hero para evitar warning de consola.

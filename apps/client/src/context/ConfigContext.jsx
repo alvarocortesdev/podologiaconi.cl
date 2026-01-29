@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import ConfigContext from "./configContext";
+import React, { useEffect, useState } from "react";
+import { ConfigContext } from "./configContextBase";
 
 export function ConfigProvider({ children }) {
   const [config, setConfig] = useState(null);
