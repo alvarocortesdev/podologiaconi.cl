@@ -12,36 +12,11 @@ import {
 } from "lucide-react";
 import getCroppedImg from "../utils/canvasUtils";
 
-// Definición de ratios con separadores y estructura para filas móviles
-// Estructura visual requerida:
-// Fila 1: 1:1
-// Fila 2: 16:9, 5:4, 4:3, 3:2
-// Fila 3: 9:16, 4:5, 3:4, 2:3
-// Fila 4: Libre
-
-// Agruparemos por filas para facilitar el renderizado
-const ASPECT_GROUPS = [
-  [{ label: "1:1", value: 1 / 1 }],
-  [
-    { label: "16:9", value: 16 / 9 },
-    { label: "5:4", value: 5 / 4 },
-    { label: "4:3", value: 4 / 3 },
-    { label: "3:2", value: 3 / 2 },
-  ],
-  [
-    { label: "9:16", value: 9 / 16 },
-    { label: "4:5", value: 4 / 5 },
-    { label: "3:4", value: 3 / 4 },
-    { label: "2:3", value: 2 / 3 },
-  ],
-  [{ label: "Libre", value: undefined }],
-];
-
 export default function ImageUpload({ value, onChange, label }) {
   const [imageSrc, setImageSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [aspect, setAspect] = useState(1); // Default to 1:1
+  const aspect = 1; // Always 1:1
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropping, setIsCropping] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -68,7 +43,6 @@ export default function ImageUpload({ value, onChange, label }) {
       setIsCropping(true);
       setPreviewUrl(null);
       setFileToUpload(null);
-      setAspect(1); // Reset to 1:1 default on new file
     }
   }, []);
 
@@ -322,30 +296,6 @@ export default function ImageUpload({ value, onChange, label }) {
                   onChange={(e) => setZoom(e.target.value)}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-500">Formato</p>
-                <div className="flex flex-col gap-2">
-                  {ASPECT_GROUPS.map((group, groupIndex) => (
-                    <div key={groupIndex} className="flex flex-wrap gap-2">
-                      {group.map((ratio) => (
-                        <button
-                          key={ratio.label}
-                          type="button"
-                          onClick={() => setAspect(ratio.value)}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                            aspect === ratio.value
-                              ? "bg-primary text-white"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                          }`}
-                        >
-                          {ratio.label}
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2 border-t">
