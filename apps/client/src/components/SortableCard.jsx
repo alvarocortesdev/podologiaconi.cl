@@ -21,27 +21,29 @@ export default function SortableCard({ card, onEdit, onDelete }) {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white p-4 rounded-xl border border-primary/10 flex items-center gap-4 shadow-sm"
+      className="bg-white p-4 rounded-xl border border-primary/10 flex items-center gap-4 shadow-sm w-full min-w-0"
     >
       <div
         {...attributes}
         {...listeners}
-        className="cursor-grab text-primary/40 hover:text-primary active:cursor-grabbing"
+        className="cursor-grab text-primary/40 hover:text-primary active:cursor-grabbing shrink-0"
       >
         <GripVertical size={20} />
       </div>
-      
-      <div className="flex-1">
-        <h4 className="font-bold text-primary">{card.title}</h4>
+
+      <div className="flex-1 min-w-0">
+        <h4 className="font-bold text-primary break-words">{card.title}</h4>
         {card.subtitle && (
-          <p className="text-sm text-primary/70">{card.subtitle}</p>
+          <p className="text-sm text-primary/70 break-words">{card.subtitle}</p>
         )}
         {card.details && (
-          <p className="text-xs text-primary/50 mt-1">{card.details}</p>
+          <p className="text-xs text-primary/50 mt-1 break-words">
+            {card.details}
+          </p>
         )}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 shrink-0">
         <button
           onClick={() => onEdit(card)}
           className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg transition-colors"
