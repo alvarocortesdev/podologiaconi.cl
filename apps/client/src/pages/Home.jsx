@@ -9,6 +9,7 @@ import clsx from "clsx";
 export default function Home() {
   const { introStep } = React.useContext(IntroContext);
   const { config, successCases, aboutCards } = useConfig();
+  const visibleCases = successCases.filter((c) => c.isVisible !== false);
 
   const defaultCases = [
     "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso1_x0zqpj.jpg",
@@ -233,8 +234,8 @@ export default function Home() {
           </div>
 
           <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {(successCases.length > 0
-              ? successCases
+            {(visibleCases.length > 0
+              ? visibleCases
               : defaultCases.map((url, i) => ({
                   id: i,
                   title: `Tratamiento ${i + 1}`,

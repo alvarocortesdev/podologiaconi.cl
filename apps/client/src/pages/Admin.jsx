@@ -35,6 +35,8 @@ import {
   User,
   Phone,
   Instagram,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -431,6 +433,7 @@ export default function Admin() {
         description: formData.get("description"),
         price: parseFloat(formData.get("price")),
         category: formData.get("category"),
+        showPrice: formData.get("showPrice") === "on",
       };
 
       const url = currentService
@@ -539,6 +542,7 @@ export default function Admin() {
       data.imageBefore = caseImageBefore;
       data.imageAfter = caseImageAfter;
       data.description = caseDescription;
+      data.isVisible = formData.get("isVisible") === "on";
 
       const url = currentCase
         ? `/api/success-cases/${currentCase.id}`
@@ -691,6 +695,92 @@ export default function Admin() {
     setCurrentCard(card);
     setIsCardModalOpen(true);
     setError(null);
+  };
+
+  // --- TOGGLE HANDLERS ---
+
+  const toggleGlobalPrices = async () => {
+    if (!siteConfig) return;
+    try {
+      const newShowPrices = !siteConfig.showPrices;
+      // Optimistic update
+      setSiteConfig({ ...siteConfig, showPrices: newShowPrices });
+
+      const response = await fetch("/api/config", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ...siteConfig, showPrices: newShowPrices }),
+      });
+
+      if (!response.ok) {
+        // Revert on error
+        setSiteConfig(siteConfig);
+        throw new Error("Error updating global price setting");
+      }
+
+      const updated = await response.json();
+      setSiteConfig(updated);
+    } catch (err) {
+      console.error(err);
+      setError("Error al actualizar configuración de precios");
+    }
+  };
+
+  const toggleServiceVisibility = async (service) => {
+    try {
+      // Optimistic update
+      setServices(
+        services.map((s) =>
+          s.id === service.id ? { ...s, isVisible: !s.isVisible } : s,
+        ),
+      );
+
+      const response = await fetch(`/api/services/${service.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isVisible: !service.isVisible }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error updating service visibility");
+      }
+    } catch (err) {
+      console.error(err);
+      fetchServices(); // Revert/Refresh
+    }
+  };
+
+  const toggleCaseVisibility = async (item) => {
+    try {
+      // Optimistic update
+      setSuccessCases(
+        successCases.map((c) =>
+          c.id === item.id ? { ...c, isVisible: !c.isVisible } : c,
+        ),
+      );
+
+      const response = await fetch(`/api/success-cases/${item.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isVisible: !item.isVisible }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error updating case visibility");
+      }
+    } catch (err) {
+      console.error(err);
+      fetchSuccessCases(); // Revert/Refresh
+    }
   };
 
   // --- RENDER VIEWS ---
@@ -1029,12 +1119,33 @@ export default function Admin() {
                 <h2 className="text-3xl font-bold font-display text-primary">
                   Gestión de Servicios
                 </h2>
-                <button
-                  onClick={() => openServiceModal()}
-                  className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
-                >
-                  <Plus size={20} /> Nuevo Servicio
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={toggleGlobalPrices}
+                    className={clsx(
+                      "px-4 py-2.5 rounded-lg font-bold transition-colors flex items-center gap-2 border",
+                      siteConfig?.showPrices
+                        ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
+                        : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200",
+                    )}
+                  >
+                    {siteConfig?.showPrices ? (
+                      <>
+                        <Eye size={20} /> Precios Visibles
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff size={20} /> Precios Ocultos
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => openServiceModal()}
+                    className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+                  >
+                    <Plus size={20} /> Nuevo Servicio
+                  </button>
+                </div>
               </div>
 
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-primary/10">
@@ -1101,6 +1212,28 @@ export default function Admin() {
                                 ${service.price.toLocaleString("es-CL")}
                               </td>
                               <td className="px-6 py-4 text-right space-x-2">
+                                <button
+                                  onClick={() =>
+                                    toggleServiceVisibility(service)
+                                  }
+                                  className={clsx(
+                                    "p-2 rounded-lg",
+                                    service.isVisible
+                                      ? "text-green-600 bg-green-50 hover:bg-green-100"
+                                      : "text-gray-400 bg-gray-50 hover:bg-gray-100",
+                                  )}
+                                  title={
+                                    service.isVisible
+                                      ? "Ocultar Servicio"
+                                      : "Mostrar Servicio"
+                                  }
+                                >
+                                  {service.isVisible ? (
+                                    <Eye size={18} />
+                                  ) : (
+                                    <EyeOff size={18} />
+                                  )}
+                                </button>
                                 <button
                                   onClick={() => openServiceModal(service)}
                                   className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
@@ -1178,6 +1311,24 @@ export default function Admin() {
                           .trim()}
                       </p>
                       <div className="flex justify-end gap-2 pt-2 border-t border-primary/5">
+                        <button
+                          onClick={() => toggleCaseVisibility(item)}
+                          className={clsx(
+                            "p-2 rounded-lg",
+                            item.isVisible
+                              ? "text-green-600 bg-green-50 hover:bg-green-100"
+                              : "text-gray-400 bg-gray-50 hover:bg-gray-100",
+                          )}
+                          title={
+                            item.isVisible ? "Ocultar Caso" : "Mostrar Caso"
+                          }
+                        >
+                          {item.isVisible ? (
+                            <Eye size={18} />
+                          ) : (
+                            <EyeOff size={18} />
+                          )}
+                        </button>
                         <button
                           onClick={() => openCaseModal(item)}
                           className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
@@ -1603,6 +1754,23 @@ export default function Admin() {
                     required
                     className="w-full px-4 py-2 border border-primary/20 rounded-lg focus:ring-2 focus:ring-secondary outline-none"
                   />
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="showPrice"
+                      id="showPrice"
+                      defaultChecked={
+                        currentService ? currentService.showPrice : true
+                      }
+                      className="w-4 h-4 text-secondary rounded border-gray-300 focus:ring-secondary"
+                    />
+                    <label
+                      htmlFor="showPrice"
+                      className="text-sm text-primary/70 cursor-pointer select-none"
+                    >
+                      Mostrar precio públicamente
+                    </label>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-primary/80 mb-1">
@@ -1718,27 +1886,46 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="pt-6 flex justify-end gap-3 border-t mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsCaseModalOpen(false)}
-                  className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90"
-                >
-                  {loading ? (
-                    <Loader2 className="animate-spin" size={18} />
-                  ) : currentCase ? (
-                    "Actualizar"
-                  ) : (
-                    "Guardar"
-                  )}
-                </button>
+              <div className="pt-6 flex justify-between items-center border-t mt-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="isVisible"
+                    id="isVisibleCase"
+                    defaultChecked={currentCase ? currentCase.isVisible : true}
+                    className="hidden peer"
+                  />
+                  <label
+                    htmlFor="isVisibleCase"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer select-none transition-colors peer-checked:bg-green-100 peer-checked:text-green-700 bg-gray-100 text-gray-500"
+                  >
+                    <Eye size={20} className="hidden peer-checked:block" />
+                    <EyeOff size={20} className="block peer-checked:hidden" />
+                    <span className="font-bold">Visibilidad</span>
+                  </label>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsCaseModalOpen(false)}
+                    className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90"
+                  >
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : currentCase ? (
+                      "Actualizar"
+                    ) : (
+                      "Guardar"
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
