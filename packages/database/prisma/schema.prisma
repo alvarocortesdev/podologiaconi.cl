@@ -16,6 +16,8 @@ model Service {
   description String?
   price       Float
   category    String
+  isVisible   Boolean  @default(true)
+  showPrice   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -58,6 +60,7 @@ model SiteConfig {
   aboutTitle     String   @default("Hola, soy Constanza Cortés")
   aboutText      String   @default("Podóloga clínica certificada con experiencia en el tratamiento de diversas patologías del pie. Mi compromiso es brindar una atención de calidad, segura y empática.")
   aboutImage     String?
+  showPrices     Boolean  @default(true)
 
   aboutCards     AboutCard[]
 
@@ -82,6 +85,7 @@ model SuccessCase {
   description String
   imageBefore String?
   imageAfter  String?
+  isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
