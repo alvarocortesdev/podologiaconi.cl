@@ -308,12 +308,15 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="p-8 overflow-y-auto max-h-[60vh]">
+            <div className="p-8 overflow-y-auto max-h-[60vh] w-full min-w-0">
               <h3 className="text-xl sm:text-2xl font-display font-bold text-primary mb-3">
                 {selectedCase.title}
               </h3>
               <div
-                className="text-primary/70 text-sm sm:text-base leading-relaxed prose prose-sm prose-primary max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 break-normal whitespace-normal hyphens-none"
+                className="text-primary/70 text-sm sm:text-base leading-relaxed 
+                          prose prose-sm prose-primary max-w-none 
+                          prose-p:my-2 prose-ul:my-2 prose-ol:my-2 
+                          break-normal whitespace-normal hyphens-none"
                 dangerouslySetInnerHTML={{ __html: selectedCase.description }}
               />
             </div>
