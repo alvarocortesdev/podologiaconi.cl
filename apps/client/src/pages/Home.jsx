@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { IntroContext } from "../context/IntroContext";
 import { useConfig } from "../context/configContext";
 import clsx from "clsx";
+import DOMPurify from "dompurify";
 
 export default function Home() {
   const { introStep } = React.useContext(IntroContext);
@@ -270,6 +271,22 @@ export default function Home() {
             .replace(/\u00a0/g, " ")
             .replace(/&shy;/g, "")
             .replace(/\u00ad/g, "");
+          const sanitizedDescription = DOMPurify.sanitize(normalizedDescription, {
+            ALLOWED_TAGS: [
+              "p",
+              "ul",
+              "ol",
+              "li",
+              "strong",
+              "em",
+              "b",
+              "i",
+              "br",
+              "a",
+            ],
+            ALLOWED_ATTR: ["href", "target", "rel"],
+          });
+          const titleId = `case-title-${selectedCase.id || "selected"}`;
 
           return (
             <div
@@ -279,10 +296,14 @@ export default function Home() {
               <div
                 className="bg-white rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
               >
                 <button
                   onClick={() => setSelectedCase(null)}
                   className="absolute top-4 right-4 z-20 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors backdrop-blur-md"
+                  aria-label="Cerrar"
                 >
                   <X size={24} />
                 </button>
@@ -324,12 +345,15 @@ export default function Home() {
                 </div>
 
                 <div className="p-8 overflow-y-auto max-h-[60vh] w-full min-w-0 whitespace-normal">
-                  <h3 className="text-xl sm:text-2xl font-display font-bold text-primary mb-3">
+                  <h3
+                    id={titleId}
+                    className="text-xl sm:text-2xl font-display font-bold text-primary mb-3"
+                  >
                     {selectedCase.title}
                   </h3>
                   <div
                     className="text-primary/70 text-sm sm:text-base leading-relaxed max-w-none whitespace-normal break-normal hyphens-none [&>p]:mb-3 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3"
-                    dangerouslySetInnerHTML={{ __html: normalizedDescription }}
+                    dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
                   />
                 </div>
               </div>
