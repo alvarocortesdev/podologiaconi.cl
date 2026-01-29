@@ -40,9 +40,9 @@ import {
   EyeOff,
   Menu,
 } from "lucide-react";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
 import clsx from "clsx";
+
+const RichTextEditor = React.lazy(() => import("../components/RichTextEditor"));
 
 export default function Admin() {
   // Auth State: 'LOGIN' | 'SETUP' | '2FA' | 'DASHBOARD'
@@ -1972,19 +1972,27 @@ export default function Admin() {
                       Descripción
                     </label>
                     <div className="bg-white rounded-lg overflow-hidden">
-                      <ReactQuill
-                        theme="snow"
-                        value={caseDescription}
-                        onChange={setCaseDescription}
-                        modules={{
-                          toolbar: [
-                            ["bold", "italic", "underline"],
-                            [{ list: "ordered" }, { list: "bullet" }],
-                            ["link"],
-                          ],
-                        }}
-                        className="h-64 mb-10"
-                      />
+                      <React.Suspense
+                        fallback={
+                          <div className="h-64 mb-10 flex items-center justify-center text-primary">
+                            <Loader2 className="animate-spin" />
+                          </div>
+                        }
+                      >
+                        <RichTextEditor
+                          theme="snow"
+                          value={caseDescription}
+                          onChange={setCaseDescription}
+                          modules={{
+                            toolbar: [
+                              ["bold", "italic", "underline"],
+                              [{ list: "ordered" }, { list: "bullet" }],
+                              ["link"],
+                            ],
+                          }}
+                          className="h-64 mb-10"
+                        />
+                      </React.Suspense>
                     </div>
                   </div>
                 </div>

@@ -14,3 +14,6 @@
 
 - Ajusta CSP para permitir JSON-LD inline.
 - Configura split de chunks en build para reducir advertencias.
+## [0.4.0] - 2026-01-29
+
+- Endurece CSP con hash para JSON-LD sin unsafe-inline.
