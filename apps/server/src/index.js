@@ -712,8 +712,16 @@ app.post('/api/upload', uploadLimiter, authenticateToken, requireAuthScope(['ful
       resource_type: 'auto'
     });
 
+    const optimizedUrl = cloudinary.url(result.public_id, {
+      secure: true,
+      resource_type: 'image',
+      quality: 'auto',
+      fetch_format: 'auto'
+    });
+
     res.json({
       url: result.secure_url,
+      optimizedUrl,
       public_id: result.public_id
     });
   } catch (error) {

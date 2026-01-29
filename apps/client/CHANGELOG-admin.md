@@ -10,3 +10,5 @@
 - Integra logout server-side y carga de imágenes con cookies.
 ## [0.4.0] - 2026-01-29
 - Carga diferida del editor para reducir tamaño de bundle.
+## [0.5.0] - 2026-01-29
+- Devuelve URL optimizada de Cloudinary en subida de imágenes.
