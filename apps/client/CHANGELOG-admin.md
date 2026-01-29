@@ -8,3 +8,5 @@
 ## [0.3.0] - 2026-01-29
 - Migra autenticación a cookies HttpOnly con sesión persistente.
 - Integra logout server-side y carga de imágenes con cookies.
+## [0.4.0] - 2026-01-29
+- Carga diferida del editor para reducir tamaño de bundle.
