@@ -12,9 +12,9 @@ export default function Home() {
   const visibleCases = successCases.filter((c) => c.isVisible !== false);
 
   const defaultCases = [
-    "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso1_x0zqpj.jpg",
-    "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso2_zzp3k2.jpg",
-    "https://res.cloudinary.com/peluimages/image/upload/v1769562964/caso3_sthwhb.jpg",
+    "https://placehold.co/600x400?text=Caso+1",
+    "https://placehold.co/600x400?text=Caso+2",
+    "https://placehold.co/600x400?text=Caso+3",
   ];
 
   const defaultAboutCards = [
@@ -100,7 +100,7 @@ export default function Home() {
                   <img
                     src={
                       config?.aboutImage ||
-                      "https://res.cloudinary.com/peluimages/image/upload/v1769608569/avatar_mdrkl6.png"
+                      "https://placehold.co/400x400?text=Avatar"
                     }
                     alt="Podóloga Coni - Especialista en cuidado podológico integral"
                     className="w-full h-full object-cover"
@@ -236,12 +236,14 @@ export default function Home() {
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             {(visibleCases.length > 0
               ? visibleCases
-              : defaultCases.map((url, i) => ({
-                  id: i,
-                  title: `Tratamiento ${i + 1}`,
-                  imageAfter: url,
-                  description: "Ver más",
-                }))
+              : successCases.length === 0
+                ? defaultCases.map((url, i) => ({
+                    id: i,
+                    title: `Tratamiento ${i + 1}`,
+                    imageAfter: url,
+                    description: "Ver más",
+                  }))
+                : []
             ).map((item, idx) => (
               <div
                 key={item.id || idx}
