@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ if (!process.env.SECRET_KEY) {
   throw new Error('SECRET_KEY is required');
 }
 const SECRET_KEY = process.env.SECRET_KEY;
+const COOKIE_NAME = 'admin_token';
 
 // Cloudinary Config (auto-loads from CLOUDINARY_URL)
 // We only need to ensure secure URLs
@@ -98,15 +100,19 @@ const corsOptions = {
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  maxAge: 86400
+  maxAge: 86400,
+  credentials: true
 };
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 
 // Middleware for auth
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const headerToken = authHeader && authHeader.split(' ')[1];
+  const cookieToken = req.cookies?.[COOKIE_NAME];
+  const token = headerToken || cookieToken;
 
   if (token == null) return res.sendStatus(401);
 
@@ -292,7 +298,23 @@ app.post('/api/auth/verify-2fa', authLimiter, authenticateToken, async (req, res
 
   // Issue full token
   const token = jwt.sign({ username: admin.username, scope: 'full' }, SECRET_KEY, { expiresIn: '8h' });
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 8 * 60 * 60 * 1000
+  });
   res.json({ token });
+});
+
+app.get('/api/admin/session', authenticateToken, requireAuthScope(['full']), (req, res) => {
+  res.json({ ok: true });
+});
+
+app.post('/api/logout', (req, res) => {
+  res.clearCookie(COOKIE_NAME, { path: '/' });
+  res.json({ ok: true });
 });
 
 

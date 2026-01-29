@@ -10,3 +10,7 @@
 
 - Añade robots.txt y sitemap.xml para indexación.
 - Incluye JSON-LD LocalBusiness y actualiza manifest PWA.
+## [0.3.0] - 2026-01-29
+
+- Ajusta CSP para permitir JSON-LD inline.
+- Configura split de chunks en build para reducir advertencias.
