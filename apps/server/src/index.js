@@ -14,7 +14,10 @@ dotenv.config();
 
 const app = express();
 const resend = new Resend(process.env.RESEND_API_KEY);
-const SECRET_KEY = process.env.SECRET_KEY || 'supersecretkey';
+if (!process.env.SECRET_KEY) {
+  throw new Error('SECRET_KEY is required');
+}
+const SECRET_KEY = process.env.SECRET_KEY;
 
 // Cloudinary Config (auto-loads from CLOUDINARY_URL)
 // We only need to ensure secure URLs
@@ -22,9 +25,24 @@ cloudinary.config({
   secure: true
 });
 
-// Multer config (memory storage)
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const allowedImageTypes = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif'
+]);
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!allowedImageTypes.has(file.mimetype)) {
+      return cb(null, false);
+    }
+    return cb(null, true);
+  }
+});
 
 // Helper to extract public_id from Cloudinary URL
 const getPublicIdFromUrl = (url) => {
@@ -67,8 +85,23 @@ const generateCode = () => {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 };
 
-app.use(cors());
-app.use(express.json());
+app.set('trust proxy', 1);
+const allowedOrigins = (process.env.APP_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  maxAge: 86400
+};
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '1mb' }));
 
 // Middleware for auth
 const authenticateToken = (req, res, next) => {
@@ -83,10 +116,42 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+const requireAuthScope = (allowedScopes) => (req, res, next) => {
+  const scope = req.user?.scope;
+  if (!allowedScopes.includes(scope)) {
+    return res.status(403).json({ error: 'Invalid scope' });
+  }
+  return next();
+};
+const createRateLimiter = ({ windowMs, max, keyPrefix }) => {
+  const hits = new Map();
+  return (req, res, next) => {
+    const key = `${keyPrefix}:${req.ip}`;
+    const now = Date.now();
+    const entry = hits.get(key);
+    if (!entry || now > entry.expiresAt) {
+      hits.set(key, { count: 1, expiresAt: now + windowMs });
+      return next();
+    }
+    if (entry.count >= max) {
+      return res.status(429).json({ error: 'Demasiadas solicitudes, intenta más tarde.' });
+    }
+    entry.count += 1;
+    hits.set(key, entry);
+    return next();
+  };
+};
+const loginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, keyPrefix: 'login' });
+const authLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20, keyPrefix: 'auth' });
+const quoteLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 30, keyPrefix: 'quote' });
+const uploadLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20, keyPrefix: 'upload' });
 
 // Login Route
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
+  }
   const admin = await prisma.admin.findUnique({ where: { username } });
 
   if (!admin) return res.status(400).json({ error: 'Usuario no encontrado' });
@@ -132,12 +197,12 @@ app.post('/api/login', async (req, res) => {
 // Auth Routes
 
 // Send Verification Code (for Setup)
-app.post('/api/auth/send-code', authenticateToken, async (req, res) => {
+app.post('/api/auth/send-code', authLimiter, authenticateToken, async (req, res) => {
   const { email } = req.body;
   const { username, scope } = req.user;
 
   if (scope !== 'setup') return res.status(403).json({ error: 'Invalid scope for this action' });
-  if (!email) return res.status(400).json({ error: 'Email is required' });
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email is required' });
 
   const code = generateCode();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
@@ -164,11 +229,16 @@ app.post('/api/auth/send-code', authenticateToken, async (req, res) => {
 });
 
 // Setup Account (First Time)
-app.post('/api/auth/setup', authenticateToken, async (req, res) => {
+app.post('/api/auth/setup', authLimiter, authenticateToken, async (req, res) => {
   const { email, code, newPassword } = req.body;
   const { username, scope } = req.user;
 
   if (scope !== 'setup') return res.status(403).json({ error: 'Invalid scope' });
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
+  if (!code || String(code).length !== 8) return res.status(400).json({ error: 'Código inválido' });
+  if (!newPassword || newPassword.length < 10) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 10 caracteres' });
+  }
 
   const admin = await prisma.admin.findUnique({ where: { username } });
 
@@ -197,11 +267,12 @@ app.post('/api/auth/setup', authenticateToken, async (req, res) => {
 });
 
 // Verify 2FA
-app.post('/api/auth/verify-2fa', authenticateToken, async (req, res) => {
+app.post('/api/auth/verify-2fa', authLimiter, authenticateToken, async (req, res) => {
   const { code } = req.body;
   const { username, scope } = req.user;
 
   if (scope !== '2fa') return res.status(403).json({ error: 'Invalid scope' });
+  if (!code || String(code).length !== 8) return res.status(400).json({ error: 'Código inválido' });
 
   const admin = await prisma.admin.findUnique({ where: { username } });
 
@@ -251,9 +322,12 @@ app.get('/api/services/version', async (req, res) => {
 });
 
 // Create a service (Protected)
-app.post('/api/services', authenticateToken, async (req, res) => {
+app.post('/api/services', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { name, description, price, category, isVisible, showPrice } = req.body;
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Nombre y categoría son requeridos' });
+    }
     const service = await prisma.service.create({
       data: {
         name,
@@ -271,7 +345,7 @@ app.post('/api/services', authenticateToken, async (req, res) => {
 });
 
 // Update a service (Protected)
-app.put('/api/services/:id', authenticateToken, async (req, res) => {
+app.put('/api/services/:id', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, category, isVisible, showPrice } = req.body;
@@ -296,7 +370,7 @@ app.put('/api/services/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete a service (Protected)
-app.delete('/api/services/:id', authenticateToken, async (req, res) => {
+app.delete('/api/services/:id', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.service.delete({ where: { id: parseInt(id) } });
@@ -307,9 +381,15 @@ app.delete('/api/services/:id', authenticateToken, async (req, res) => {
 });
 
 // Send quotation email
-app.post('/api/quote', async (req, res) => {
+app.post('/api/quote', quoteLimiter, async (req, res) => {
   try {
     const { name, email, phone, services } = req.body;
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Nombre y teléfono son requeridos' });
+    }
+    if (email && !email.includes('@')) {
+      return res.status(400).json({ error: 'Email inválido' });
+    }
     const serviceList = Array.isArray(services) ? services.map(s => `- ${s.name}`).join('\n') : '';
     const emailLine = email ? `Email: ${email}\n` : '';
 
@@ -363,7 +443,7 @@ app.get('/api/config', async (req, res) => {
 });
 
 // Update Site Config (Protected)
-app.put('/api/config', authenticateToken, async (req, res) => {
+app.put('/api/config', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const {
       email, phone, instagram, whatsapp,
@@ -412,7 +492,7 @@ app.get('/api/about-cards', async (req, res) => {
 });
 
 // Create About Card (Protected)
-app.post('/api/about-cards', authenticateToken, async (req, res) => {
+app.post('/api/about-cards', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { title, subtitle, details } = req.body;
 
@@ -439,7 +519,7 @@ app.post('/api/about-cards', authenticateToken, async (req, res) => {
 });
 
 // Reorder About Cards (Protected)
-app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
+app.put('/api/about-cards/reorder', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { cards } = req.body; // Array of { id, order }
 
@@ -481,7 +561,7 @@ app.put('/api/about-cards/reorder', authenticateToken, async (req, res) => {
 });
 
 // Update About Card (Protected)
-app.put('/api/about-cards/:id', authenticateToken, async (req, res) => {
+app.put('/api/about-cards/:id', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, subtitle, details } = req.body;
@@ -496,7 +576,7 @@ app.put('/api/about-cards/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete About Card (Protected)
-app.delete('/api/about-cards/:id', authenticateToken, async (req, res) => {
+app.delete('/api/about-cards/:id', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.aboutCard.delete({ where: { id: parseInt(id) } });
@@ -520,7 +600,7 @@ app.get('/api/success-cases', async (req, res) => {
 });
 
 // Create Success Case (Protected)
-app.post('/api/success-cases', authenticateToken, async (req, res) => {
+app.post('/api/success-cases', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { title, description, imageBefore, imageAfter, isVisible } = req.body;
     const newCase = await prisma.successCase.create({
@@ -539,7 +619,7 @@ app.post('/api/success-cases', authenticateToken, async (req, res) => {
 });
 
 // Update Success Case (Protected)
-app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
+app.put('/api/success-cases/:id', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, imageBefore, imageAfter, isVisible } = req.body;
@@ -575,7 +655,7 @@ app.put('/api/success-cases/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete Success Case (Protected)
-app.delete('/api/success-cases/:id', authenticateToken, async (req, res) => {
+app.delete('/api/success-cases/:id', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { id } = req.params;
     const caseItem = await prisma.successCase.findUnique({ where: { id: parseInt(id) } });
@@ -597,8 +677,8 @@ app.delete('/api/success-cases/:id', authenticateToken, async (req, res) => {
 });
 
 // Upload Image to Cloudinary
-app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+app.post('/api/upload', uploadLimiter, authenticateToken, requireAuthScope(['full']), upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Archivo inválido o no permitido' });
 
   try {
     // Convert buffer to base64
@@ -621,7 +701,7 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
 });
 
 // Delete Image from Cloudinary (Manual)
-app.post('/api/upload/delete', authenticateToken, async (req, res) => {
+app.post('/api/upload/delete', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   const { public_id, url } = req.body;
 
   // Allow passing url or public_id
@@ -642,10 +722,13 @@ app.post('/api/upload/delete', authenticateToken, async (req, res) => {
 });
 
 // Profile: Update Password
-app.put('/api/admin/profile/password', authenticateToken, async (req, res) => {
+app.put('/api/admin/profile/password', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const { username } = req.user;
+    if (!newPassword || newPassword.length < 10) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 10 caracteres' });
+    }
     const admin = await prisma.admin.findUnique({ where: { username } });
 
     const valid = await bcrypt.compare(currentPassword, admin.password);
@@ -661,10 +744,13 @@ app.put('/api/admin/profile/password', authenticateToken, async (req, res) => {
 });
 
 // Profile: Request Email Change
-app.post('/api/admin/profile/email-request', authenticateToken, async (req, res) => {
+app.post('/api/admin/profile/email-request', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { newEmail } = req.body;
     const { username } = req.user;
+    if (!newEmail || !newEmail.includes('@')) {
+      return res.status(400).json({ error: 'Email inválido' });
+    }
 
     // Generate code
     const code = generateCode();
@@ -695,10 +781,13 @@ app.post('/api/admin/profile/email-request', authenticateToken, async (req, res)
 });
 
 // Profile: Confirm Email Change
-app.post('/api/admin/profile/email-confirm', authenticateToken, async (req, res) => {
+app.post('/api/admin/profile/email-confirm', authenticateToken, requireAuthScope(['full']), async (req, res) => {
   try {
     const { code } = req.body;
     const { username } = req.user;
+    if (!code || String(code).length !== 8) {
+      return res.status(400).json({ error: 'Código inválido' });
+    }
 
     const admin = await prisma.admin.findUnique({ where: { username } });
 
