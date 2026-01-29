@@ -63,6 +63,7 @@ const mockServices = [
 
 export default function Services() {
   const [services, setServices] = useState([]);
+  const [siteConfig, setSiteConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [selectedServices, setSelectedServices] = useState([]);
@@ -102,6 +103,10 @@ export default function Services() {
     }
     (async () => {
       try {
+        // Fetch Config
+        const configRes = await fetch("/api/config");
+        if (configRes.ok) setSiteConfig(await configRes.json());
+
         const vres = await fetch("/api/services/version");
         let serverVersion = null;
         if (vres.ok) {
@@ -137,12 +142,16 @@ export default function Services() {
     })();
   }, []);
 
-  const categories = ["Todos", ...new Set(services.map((s) => s.category))];
+  const visibleServices = services.filter((s) => s.isVisible !== false);
+  const categories = [
+    "Todos",
+    ...new Set(visibleServices.map((s) => s.category)),
+  ];
 
   const filteredServices =
     selectedCategory === "Todos"
-      ? services
-      : services.filter((s) => s.category === selectedCategory);
+      ? visibleServices
+      : visibleServices.filter((s) => s.category === selectedCategory);
 
   const toggleService = (service) => {
     if (selectedServices.find((s) => s.id === service.id)) {
@@ -152,7 +161,14 @@ export default function Services() {
     }
   };
 
-  // const total = selectedServices.reduce((acc, s) => acc + s.price, 0);
+  const showGlobalPrices = siteConfig?.showPrices !== false;
+  const total = showGlobalPrices
+    ? selectedServices.reduce((acc, s) => {
+        if (s.showPrice !== false) return acc + (s.price || 0);
+        return acc;
+      }, 0)
+    : null;
+
   const formatClPhone = (digits) => {
     const s = (digits || "").replace(/\D/g, "").slice(0, 9);
     const part1 = s.slice(0, 1);
@@ -290,6 +306,11 @@ export default function Services() {
                     <span className="text-xs font-bold uppercase tracking-wider text-secondary bg-secondary/10 px-3 py-1.5 rounded-full">
                       {service.category}
                     </span>
+                    {showGlobalPrices && service.showPrice !== false && (
+                      <span className="font-bold text-primary">
+                        ${service.price.toLocaleString("es-CL")}
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -302,6 +323,13 @@ export default function Services() {
           <div className="fixed bottom-6 inset-x-0 px-4 z-40">
             <div className="max-w-2xl mx-auto bg-primary text-white rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4 animate-slide-up">
               <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSelectedServices([])}
+                  className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+                  title="Limpiar todo"
+                >
+                  <X size={20} />
+                </button>
                 <div className="bg-white/10 p-3 rounded-xl hidden sm:block">
                   <ShoppingBag size={24} />
                 </div>
@@ -309,6 +337,11 @@ export default function Services() {
                   <p className="text-sm text-gray-300 font-medium">
                     {selectedServices.length} servicio(s) seleccionados
                   </p>
+                  {total !== null && (
+                    <p key={total} className="text-lg font-bold">
+                      ${total.toLocaleString("es-CL")}
+                    </p>
+                  )}
                 </div>
               </div>
               <button
@@ -447,11 +480,24 @@ export default function Services() {
                         </p>
                         <ul className="text-sm text-primary/80 space-y-1 mb-3">
                           {selectedServices.map((s) => (
-                            <li key={s.id} className="flex">
+                            <li key={s.id} className="flex justify-between">
                               <span>{s.name}</span>
+                              {showGlobalPrices && (
+                                <span className="font-bold">
+                                  {s.showPrice !== false
+                                    ? `$${s.price.toLocaleString("es-CL")}`
+                                    : "-"}
+                                </span>
+                              )}
                             </li>
                           ))}
                         </ul>
+                        {total !== null && (
+                          <div className="border-t border-primary/10 pt-2 mt-2 flex justify-between font-bold text-primary">
+                            <span>Total Estimado:</span>
+                            <span>${total.toLocaleString("es-CL")}</span>
+                          </div>
+                        )}
                       </div>
 
                       {quoteError && (
