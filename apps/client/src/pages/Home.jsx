@@ -6,6 +6,7 @@ import { IntroContext } from "../context/IntroContext";
 import { useConfig } from "../context/configContext";
 import clsx from "clsx";
 import DOMPurify from "dompurify";
+import { buildCloudinarySrcSet, buildCloudinaryUrl } from "../utils/cloudinary";
 
 export default function Home() {
   const { introStep } = React.useContext(IntroContext);
@@ -45,6 +46,28 @@ export default function Home() {
     aboutCards && aboutCards.length > 0 ? aboutCards : defaultAboutCards;
 
   const [selectedCase, setSelectedCase] = React.useState(null);
+  const heroImage =
+    config?.aboutImage || "https://placehold.co/400x400?text=Avatar";
+  const heroSrc = buildCloudinaryUrl(heroImage, { width: 640 });
+  const heroSrcSet = buildCloudinarySrcSet(
+    heroImage,
+    [256, 320, 480, 640, 960],
+  );
+
+  React.useEffect(() => {
+    if (!heroImage) return;
+    const existing = document.querySelector('link[data-preload-hero="true"]');
+    if (existing) existing.remove();
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = buildCloudinaryUrl(heroImage, { width: 960 });
+    link.setAttribute("data-preload-hero", "true");
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+    };
+  }, [heroImage]);
 
   return (
     <div className="pb-16 sm:pb-24">
@@ -99,10 +122,8 @@ export default function Home() {
               <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-[480px] lg:h-[480px] bg-primary/10 rounded-full p-3 sm:p-4">
                 <div className="w-full h-full rounded-full overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
                   <img
-                    src={
-                      config?.aboutImage ||
-                      "https://placehold.co/400x400?text=Avatar"
-                    }
+                    src={heroSrc}
+                    srcSet={heroSrcSet}
                     alt="Podóloga Coni - Especialista en cuidado podológico integral"
                     className="w-full h-full object-cover"
                     loading="eager"
@@ -322,11 +343,18 @@ export default function Home() {
                     {selectedCase.imageBefore ? (
                       <>
                         <img
-                          src={selectedCase.imageBefore}
+                          src={buildCloudinaryUrl(selectedCase.imageBefore, {
+                            width: 960,
+                          })}
+                          srcSet={buildCloudinarySrcSet(
+                            selectedCase.imageBefore,
+                            [640, 960, 1280],
+                          )}
                           alt="Antes"
                           className="w-full h-full object-cover"
                           loading="eager"
                           decoding="async"
+                          sizes="(min-width: 1024px) 50vw, 100vw"
                         />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
                         <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
@@ -343,9 +371,16 @@ export default function Home() {
                   {/* After Image */}
                   <div className="relative h-full overflow-hidden">
                     <img
-                      src={selectedCase.imageAfter}
+                      src={buildCloudinaryUrl(selectedCase.imageAfter, {
+                        width: 960,
+                      })}
+                      srcSet={buildCloudinarySrcSet(
+                        selectedCase.imageAfter,
+                        [640, 960, 1280],
+                      )}
                       alt="Después"
                       className="w-full h-full object-cover"
+                      sizes="(min-width: 1024px) 50vw, 100vw"
                       loading="eager"
                       decoding="async"
                     />
@@ -379,6 +414,16 @@ export default function Home() {
 function SuccessCaseCard({ item, onClick }) {
   const [showAfter, setShowAfter] = React.useState(true);
   const hasBefore = !!item.imageBefore;
+  const beforeSrc = buildCloudinaryUrl(item.imageBefore, { width: 640 });
+  const afterSrc = buildCloudinaryUrl(item.imageAfter, { width: 640 });
+  const beforeSrcSet = buildCloudinarySrcSet(
+    item.imageBefore,
+    [320, 480, 640, 960],
+  );
+  const afterSrcSet = buildCloudinarySrcSet(
+    item.imageAfter,
+    [320, 480, 640, 960],
+  );
 
   React.useEffect(() => {
     if (!hasBefore) return;
@@ -396,7 +441,8 @@ function SuccessCaseCard({ item, onClick }) {
       <div className="relative h-64 sm:h-80 w-full overflow-hidden">
         {hasBefore && (
           <img
-            src={item.imageBefore}
+            src={beforeSrc}
+            srcSet={beforeSrcSet}
             alt={`${item.title} - Antes`}
             className={clsx(
               "absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110",
@@ -404,10 +450,12 @@ function SuccessCaseCard({ item, onClick }) {
             )}
             loading="lazy"
             decoding="async"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           />
         )}
         <img
-          src={item.imageAfter}
+          src={afterSrc}
+          srcSet={afterSrcSet}
           alt={`${item.title} - Después`}
           className={clsx(
             "absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110",
@@ -419,6 +467,7 @@ function SuccessCaseCard({ item, onClick }) {
           )}
           loading="lazy"
           decoding="async"
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity"></div>
