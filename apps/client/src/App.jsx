@@ -5,7 +5,7 @@ import Layout from "./layouts/Layout";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
 import Admin from "./pages/Admin";
-import { ConfigProvider } from "./context/configContext";
+import { ConfigProvider } from "./context/ConfigContext";
 
 function App() {
   return (
