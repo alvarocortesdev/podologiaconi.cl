@@ -17,3 +17,7 @@
 ## [0.4.0] - 2026-01-29
 
 - Endurece CSP con hash para JSON-LD sin unsafe-inline.
+## [0.5.0] - 2026-01-29
+
+- Optimiza carga de fuentes con preconnect y stylesheet directo.
+- Mejora LCP del hero con carga prioritaria y dimensiones fijas.
