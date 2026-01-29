@@ -1,11 +1,12 @@
 // client/src/App.jsx
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./layouts/Layout";
 import Home from "./pages/Home";
-import Services from "./pages/Services";
-import Admin from "./pages/Admin";
 import { ConfigProvider } from "./context/ConfigContext";
+
+const Services = lazy(() => import("./pages/Services"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 function App() {
   return (
@@ -23,12 +24,21 @@ function App() {
           <Route
             path="/servicios"
             element={
-              <Layout>
-                <Services />
-              </Layout>
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+                <Layout>
+                  <Services />
+                </Layout>
+              </Suspense>
             }
           />
-          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+                <Admin />
+              </Suspense>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </ConfigProvider>
