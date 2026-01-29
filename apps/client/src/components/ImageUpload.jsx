@@ -32,14 +32,11 @@ export default function ImageUpload({ value, onChange, label }) {
       const formData = new FormData();
       formData.append("file", fileToUpload, "upload.jpg");
 
-      const token = localStorage.getItem("token");
       console.log("Sending request to /api/upload...");
       const response = await fetch("/api/upload", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formData,
+        credentials: "include",
       });
 
       console.log("Response status:", response.status);
@@ -129,14 +126,13 @@ export default function ImageUpload({ value, onChange, label }) {
 
     if (window.confirm("¿Estás seguro de eliminar esta imagen?")) {
       try {
-        const token = localStorage.getItem("token");
         await fetch("/api/upload/delete", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ url: value }),
+          credentials: "include",
         });
         onChange(null);
       } catch (e) {

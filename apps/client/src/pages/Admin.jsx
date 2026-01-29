@@ -47,7 +47,6 @@ import clsx from "clsx";
 export default function Admin() {
   // Auth State: 'LOGIN' | 'SETUP' | '2FA' | 'DASHBOARD'
   const [authState, setAuthState] = useState("LOGIN");
-  const [token, setToken] = useState(localStorage.getItem("token"));
   const [tempToken, setTempToken] = useState(null);
 
   // Dashboard Tabs
@@ -155,12 +154,37 @@ export default function Admin() {
     fetchAboutCards();
   }, [fetchServices, fetchConfig, fetchSuccessCases, fetchAboutCards]);
 
+  const authFetch = useCallback(
+    (url, options = {}, useTempToken = false) => {
+      const headers = { ...(options.headers || {}) };
+      if (useTempToken && tempToken) {
+        headers.Authorization = `Bearer ${tempToken}`;
+      }
+      return fetch(url, {
+        ...options,
+        headers,
+        credentials: "include",
+      });
+    },
+    [tempToken],
+  );
+
   useEffect(() => {
-    if (token) {
-      setAuthState("DASHBOARD");
-      fetchAllData();
-    }
-  }, [token, fetchAllData]);
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/admin/session", {
+          credentials: "include",
+        });
+        if (response.ok) {
+          setAuthState("DASHBOARD");
+          fetchAllData();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    checkSession();
+  }, [fetchAllData]);
 
   useEffect(() => {
     if (siteConfig?.aboutImage) {
@@ -179,6 +203,7 @@ export default function Admin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -197,9 +222,8 @@ export default function Admin() {
         // setSuccessMsg("Hemos enviado un código de verificación a tu correo."); // Removed as requested
       } else if (data.token) {
         // Fallback for unexpected direct login
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
         setAuthState("DASHBOARD");
+        fetchAllData();
       }
     } catch (err) {
       setError(err.message || "Credenciales incorrectas");
@@ -218,14 +242,17 @@ export default function Admin() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/send-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tempToken}`,
+      const response = await authFetch(
+        "/api/auth/send-code",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
         },
-        body: JSON.stringify({ email }),
-      });
+        true,
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -257,14 +284,17 @@ export default function Admin() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/setup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tempToken}`,
+      const response = await authFetch(
+        "/api/auth/setup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, code: setupCode, newPassword }),
         },
-        body: JSON.stringify({ email, code: setupCode, newPassword }),
-      });
+        true,
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -297,14 +327,17 @@ export default function Admin() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/verify-2fa", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${tempToken}`,
+      const response = await authFetch(
+        "/api/auth/verify-2fa",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code: twoFactorCode }),
         },
-        body: JSON.stringify({ code: twoFactorCode }),
-      });
+        true,
+      );
 
       const data = await response.json();
 
@@ -312,10 +345,9 @@ export default function Admin() {
         throw new Error(data.error || "Código inválido");
       }
 
-      localStorage.setItem("token", data.token);
-      setToken(data.token);
       setAuthState("DASHBOARD");
       setTempToken(null);
+      fetchAllData();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -323,12 +355,17 @@ export default function Admin() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setAuthState("LOGIN");
-    setUsername("");
-    setPassword("");
+  const handleLogout = async () => {
+    try {
+      await authFetch("/api/logout", { method: "POST" });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAuthState("LOGIN");
+      setUsername("");
+      setPassword("");
+      setTempToken(null);
+    }
   };
 
   const handleTabChange = (tab) => {
@@ -348,11 +385,10 @@ export default function Admin() {
       if (data.newPassword !== data.confirmPassword)
         throw new Error("Las contraseñas no coinciden");
 
-      const response = await fetch("/api/admin/profile/password", {
+      const response = await authFetch("/api/admin/profile/password", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -376,11 +412,10 @@ export default function Admin() {
     setError(null);
     setSuccessMsg(null);
     try {
-      const response = await fetch("/api/admin/profile/email-request", {
+      const response = await authFetch("/api/admin/profile/email-request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ newEmail: pendingEmail }),
       });
@@ -405,11 +440,10 @@ export default function Admin() {
       const formData = new FormData(e.target);
       const code = formData.get("code");
 
-      const response = await fetch("/api/admin/profile/email-confirm", {
+      const response = await authFetch("/api/admin/profile/email-confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ code }),
       });
@@ -450,11 +484,10 @@ export default function Admin() {
 
       const method = currentService ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -475,9 +508,8 @@ export default function Admin() {
     if (!window.confirm("¿Seguro que deseas eliminar este servicio?")) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/services/${id}`, {
+      const response = await authFetch(`/api/services/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Error al eliminar");
       await fetchServices();
@@ -516,11 +548,10 @@ export default function Admin() {
         data.aboutImage = configAboutImage;
       }
 
-      const response = await fetch("/api/config", {
+      const response = await authFetch("/api/config", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -558,11 +589,10 @@ export default function Admin() {
 
       const method = currentCase ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -583,9 +613,8 @@ export default function Admin() {
     if (!window.confirm("¿Seguro que deseas eliminar este caso?")) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/success-cases/${id}`, {
+      const response = await authFetch(`/api/success-cases/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Error al eliminar");
       await fetchSuccessCases();
@@ -621,11 +650,10 @@ export default function Admin() {
 
       const method = currentCard ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -646,9 +674,8 @@ export default function Admin() {
     if (!window.confirm("¿Seguro que deseas eliminar esta tarjeta?")) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/about-cards/${id}`, {
+      const response = await authFetch(`/api/about-cards/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Error al eliminar tarjeta");
       await fetchAboutCards();
@@ -676,11 +703,10 @@ export default function Admin() {
           order: index,
         }));
 
-        const response = await fetch("/api/about-cards/reorder", {
+        const response = await authFetch("/api/about-cards/reorder", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ cards: orderUpdates }),
         });
@@ -722,11 +748,10 @@ export default function Admin() {
       // Optimistic update
       setSiteConfig({ ...siteConfig, showPrices: newShowPrices });
 
-      const response = await fetch("/api/config", {
+      const response = await authFetch("/api/config", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ ...siteConfig, showPrices: newShowPrices }),
       });
@@ -754,11 +779,10 @@ export default function Admin() {
         ),
       );
 
-      const response = await fetch(`/api/services/${service.id}`, {
+      const response = await authFetch(`/api/services/${service.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ isVisible: !service.isVisible }),
       });
@@ -781,11 +805,10 @@ export default function Admin() {
         ),
       );
 
-      const response = await fetch(`/api/success-cases/${item.id}`, {
+      const response = await authFetch(`/api/success-cases/${item.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ isVisible: !item.isVisible }),
       });
