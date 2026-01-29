@@ -7,6 +7,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import { useConfig } from "../context/ConfigContext";
 import clsx from "clsx";
 import SkeletonCard from "../components/SkeletonCard";
 import { ToastContainer } from "react-toastify";
@@ -62,8 +63,9 @@ const mockServices = [
 ];
 
 export default function Services() {
+  const { config: siteConfig, loading: configLoading } = useConfig();
   const [services, setServices] = useState([]);
-  const [siteConfig, setSiteConfig] = useState(null);
+  // const [siteConfig, setSiteConfig] = useState(null); // Replaced by context
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [selectedServices, setSelectedServices] = useState([]);
@@ -103,9 +105,7 @@ export default function Services() {
     }
     (async () => {
       try {
-        // Fetch Config
-        const configRes = await fetch("/api/config");
-        if (configRes.ok) setSiteConfig(await configRes.json());
+        // Fetch Config removed - using context
 
         const vres = await fetch("/api/services/version");
         let serverVersion = null;
@@ -259,7 +259,7 @@ export default function Services() {
         </div>
 
         {/* Services Grid */}
-        {loading ? (
+        {loading || configLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
             {[...Array(6)].map((_, index) => (
               <SkeletonCard key={index} />
