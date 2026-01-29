@@ -105,7 +105,12 @@ export default function Home() {
                     }
                     alt="Podóloga Coni - Especialista en cuidado podológico integral"
                     className="w-full h-full object-cover"
-                    loading="lazy"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                    width="480"
+                    height="480"
+                    sizes="(min-width: 1024px) 480px, (min-width: 640px) 320px, 256px"
                   />
                 </div>
               </div>
@@ -271,21 +276,24 @@ export default function Home() {
             .replace(/\u00a0/g, " ")
             .replace(/&shy;/g, "")
             .replace(/\u00ad/g, "");
-          const sanitizedDescription = DOMPurify.sanitize(normalizedDescription, {
-            ALLOWED_TAGS: [
-              "p",
-              "ul",
-              "ol",
-              "li",
-              "strong",
-              "em",
-              "b",
-              "i",
-              "br",
-              "a",
-            ],
-            ALLOWED_ATTR: ["href", "target", "rel"],
-          });
+          const sanitizedDescription = DOMPurify.sanitize(
+            normalizedDescription,
+            {
+              ALLOWED_TAGS: [
+                "p",
+                "ul",
+                "ol",
+                "li",
+                "strong",
+                "em",
+                "b",
+                "i",
+                "br",
+                "a",
+              ],
+              ALLOWED_ATTR: ["href", "target", "rel"],
+            },
+          );
           const titleId = `case-title-${selectedCase.id || "selected"}`;
 
           return (
@@ -317,6 +325,8 @@ export default function Home() {
                           src={selectedCase.imageBefore}
                           alt="Antes"
                           className="w-full h-full object-cover"
+                          loading="eager"
+                          decoding="async"
                         />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
                         <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
@@ -336,6 +346,8 @@ export default function Home() {
                       src={selectedCase.imageAfter}
                       alt="Después"
                       className="w-full h-full object-cover"
+                      loading="eager"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
                     <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
@@ -390,6 +402,8 @@ function SuccessCaseCard({ item, onClick }) {
               "absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110",
               showAfter ? "opacity-0" : "opacity-100",
             )}
+            loading="lazy"
+            decoding="async"
           />
         )}
         <img
@@ -403,6 +417,8 @@ function SuccessCaseCard({ item, onClick }) {
                 : "opacity-0"
               : "opacity-100",
           )}
+          loading="lazy"
+          decoding="async"
         />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity"></div>
