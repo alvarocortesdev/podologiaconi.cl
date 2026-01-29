@@ -21,3 +21,7 @@
 
 - Optimiza carga de fuentes con preconnect y stylesheet directo.
 - Mejora LCP del hero con carga prioritaria y dimensiones fijas.
+## [0.6.0] - 2026-01-29
+
+- Genera URLs responsivas para imágenes Cloudinary.
+- Precarga del hero y srcset en casos de éxito.
