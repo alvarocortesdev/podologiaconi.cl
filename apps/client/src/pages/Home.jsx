@@ -193,11 +193,11 @@ export default function Home() {
               </p>
             )}
           </div>
-          <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             {displayAboutCards.map((item) => (
               <div
                 key={item.id || item.title}
-                className="bg-primary/5 border-l-4 border-secondary p-5 sm:p-6 rounded-r-lg"
+                className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] bg-primary/5 border-l-4 border-secondary p-5 sm:p-6 rounded-r-lg"
               >
                 <h3 className="text-base sm:text-lg font-bold text-primary">
                   {item.title}
@@ -233,7 +233,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             {(visibleCases.length > 0
               ? visibleCases
               : defaultCases.map((url, i) => ({
@@ -243,11 +243,15 @@ export default function Home() {
                   description: "Ver más",
                 }))
             ).map((item, idx) => (
-              <SuccessCaseCard
+              <div
                 key={item.id || idx}
-                item={item}
-                onClick={() => setSelectedCase(item)}
-              />
+                className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.333rem)]"
+              >
+                <SuccessCaseCard
+                  item={item}
+                  onClick={() => setSelectedCase(item)}
+                />
+              </div>
             ))}
           </div>
           <p className="text-center text-xs sm:text-sm text-primary/60 mt-6 sm:mt-8 italic px-2">
