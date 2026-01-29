@@ -256,71 +256,79 @@ export default function Home() {
       </section>
 
       {/* Success Case Modal */}
-      {selectedCase && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300"
-          onClick={() => setSelectedCase(null)}
-        >
-          <div
-            className="bg-white rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedCase(null)}
-              className="absolute top-4 right-4 z-20 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors backdrop-blur-md"
-            >
-              <X size={24} />
-            </button>
+      {selectedCase &&
+        (() => {
+          const normalizedDescription = (selectedCase.description || "")
+            .replace(/&nbsp;/g, " ")
+            .replace(/\u00a0/g, " ")
+            .replace(/&shy;/g, "")
+            .replace(/\u00ad/g, "");
 
-            <div className="grid grid-cols-2 aspect-[2/1] bg-gray-100 relative">
-              {/* Before Image */}
-              <div className="relative h-full border-r border-white/20 overflow-hidden">
-                {selectedCase.imageBefore ? (
-                  <>
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300"
+              onClick={() => setSelectedCase(null)}
+            >
+              <div
+                className="bg-white rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setSelectedCase(null)}
+                  className="absolute top-4 right-4 z-20 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors backdrop-blur-md"
+                >
+                  <X size={24} />
+                </button>
+
+                <div className="grid grid-cols-2 aspect-[2/1] bg-gray-100 relative">
+                  {/* Before Image */}
+                  <div className="relative h-full border-r border-white/20 overflow-hidden">
+                    {selectedCase.imageBefore ? (
+                      <>
+                        <img
+                          src={selectedCase.imageBefore}
+                          alt="Antes"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
+                        <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
+                          Antes
+                        </span>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                        Sin imagen
+                      </div>
+                    )}
+                  </div>
+
+                  {/* After Image */}
+                  <div className="relative h-full overflow-hidden">
                     <img
-                      src={selectedCase.imageBefore}
-                      alt="Antes"
+                      src={selectedCase.imageAfter}
+                      alt="Después"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
                     <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
-                      Antes
+                      Después
                     </span>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-                    Sin imagen
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* After Image */}
-              <div className="relative h-full overflow-hidden">
-                <img
-                  src={selectedCase.imageAfter}
-                  alt="Después"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/3 opacity-80"></div>
-                <span className="absolute top-6 left-6 text-white font-bold text-xl tracking-wide drop-shadow-lg uppercase">
-                  Después
-                </span>
+                <div className="p-8 overflow-y-auto max-h-[60vh] w-full min-w-0 whitespace-normal">
+                  <h3 className="text-xl sm:text-2xl font-display font-bold text-primary mb-3">
+                    {selectedCase.title}
+                  </h3>
+                  <div
+                    className="text-primary/70 text-sm sm:text-base leading-relaxed max-w-none whitespace-normal break-normal hyphens-none [&>p]:mb-3 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3"
+                    dangerouslySetInnerHTML={{ __html: normalizedDescription }}
+                  />
+                </div>
               </div>
             </div>
-
-            <div className="p-8 overflow-y-auto max-h-[60vh] w-full min-w-0 whitespace-normal">
-              <h3 className="text-xl sm:text-2xl font-display font-bold text-primary mb-3">
-                {selectedCase.title}
-              </h3>
-              <div
-                className="text-primary/70 text-sm sm:text-base leading-relaxed max-w-none [&>p]:mb-3 [&>ul]:list-disc [&>ul]:ml-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol]:mb-3 break-words"
-                style={{ wordBreak: "normal", overflowWrap: "break-word" }}
-                dangerouslySetInnerHTML={{ __html: selectedCase.description }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
     </div>
   );
 }
