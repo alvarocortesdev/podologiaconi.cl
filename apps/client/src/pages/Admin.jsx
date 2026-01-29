@@ -24,6 +24,7 @@ import {
   LogOut,
   Loader2,
   CheckCircle,
+  Check,
   Mail,
   Key,
   Layout,
@@ -706,6 +707,14 @@ export default function Admin() {
 
   // --- TOGGLE HANDLERS ---
 
+  useEffect(() => {
+    const shouldLock = isServiceModalOpen || isCaseModalOpen || isCardModalOpen;
+    document.body.style.overflow = shouldLock ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isServiceModalOpen, isCaseModalOpen, isCardModalOpen]);
+
   const toggleGlobalPrices = async () => {
     if (!siteConfig) return;
     try {
@@ -1093,7 +1102,7 @@ export default function Admin() {
 
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-h-screen">
-        <div className="sticky top-0 z-30 relative bg-white">
+        <div className="fixed md:sticky top-0 z-30 w-full bg-white left-0 right-0">
           <header className="h-16 sm:h-20 border-b border-primary/10 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-sm">
             <div className="font-display font-bold text-lg sm:text-xl text-primary">
               Admin v.1.2.0
@@ -1195,7 +1204,7 @@ export default function Admin() {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background overflow-y-auto">
+        <main className="flex-1 p-4 pt-20 sm:pt-24 md:pt-6 lg:p-8 bg-background overflow-y-auto overflow-x-hidden min-w-0">
           {/* SERVICES TAB */}
           {activeTab === "SERVICES" && (
             <div>
@@ -1434,7 +1443,7 @@ export default function Admin() {
 
           {/* CONFIG TAB */}
           {activeTab === "CONFIG" && (
-            <div className="max-w-4xl">
+            <div className="max-w-4xl w-full min-w-0">
               <h2 className="text-2xl sm:text-3xl font-bold font-display text-primary mb-8">
                 Configuración General
               </h2>
@@ -1445,7 +1454,10 @@ export default function Admin() {
                 </div>
               )}
 
-              <form onSubmit={handleSaveConfig} className="space-y-8">
+              <form
+                onSubmit={handleSaveConfig}
+                className="space-y-8 w-full min-w-0"
+              >
                 {/* Hero Section */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-primary/10">
                   <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
@@ -1789,7 +1801,7 @@ export default function Admin() {
 
       {/* SERVICE MODAL */}
       {isServiceModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 z-50 overflow-y-hidden overscroll-contain">
           <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
               <h2 className="text-xl font-bold font-display">
@@ -1901,7 +1913,7 @@ export default function Admin() {
 
       {/* CASE MODAL */}
       {isCaseModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto flex items-start sm:items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-hidden flex items-start sm:items-center justify-center p-4 overscroll-contain">
           <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden my-6 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 bg-primary text-white flex justify-between items-center">
               <h2 className="text-xl font-bold font-display">
@@ -1988,28 +2000,25 @@ export default function Admin() {
                   >
                     <Eye size={20} className="hidden peer-checked:block" />
                     <EyeOff size={20} className="block peer-checked:hidden" />
-                    <span className="font-bold">Visibilidad</span>
                   </label>
                 </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => setIsCaseModalOpen(false)}
-                    className="px-5 py-2 text-primary/70 hover:bg-gray-100 rounded-lg font-bold"
+                    className="p-2 text-primary/70 hover:bg-gray-100 rounded-lg"
                   >
-                    Cancelar
+                    <X size={20} />
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90"
+                    className="p-2 bg-secondary text-primary rounded-lg hover:bg-opacity-90"
                   >
                     {loading ? (
                       <Loader2 className="animate-spin" size={18} />
-                    ) : currentCase ? (
-                      "Actualizar"
                     ) : (
-                      "Guardar"
+                      <Check size={20} />
                     )}
                   </button>
                 </div>
