@@ -37,6 +37,7 @@ import {
   Instagram,
   Eye,
   EyeOff,
+  Menu,
 } from "lucide-react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -50,6 +51,7 @@ export default function Admin() {
 
   // Dashboard Tabs
   const [activeTab, setActiveTab] = useState("CONFIG"); // SERVICES | CONFIG | SUCCESS_CASES
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Login Form
   const [username, setUsername] = useState("");
@@ -326,6 +328,11 @@ export default function Admin() {
     setAuthState("LOGIN");
     setUsername("");
     setPassword("");
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
   };
 
   // Profile Handlers
@@ -787,13 +794,13 @@ export default function Admin() {
 
   if (authState === "LOGIN") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
+        <div className="bg-white p-6 sm:p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
           <div className="text-center mb-8">
             <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Lock size={32} />
             </div>
-            <h1 className="text-3xl font-bold font-display text-primary">
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-primary">
               Área Privada
             </h1>
             <p className="text-primary/70 mt-2">
@@ -852,13 +859,13 @@ export default function Admin() {
 
   if (authState === "SETUP") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-lg border border-primary/10">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
+        <div className="bg-white p-6 sm:p-10 rounded-2xl shadow-xl w-full max-w-lg border border-primary/10">
           <div className="text-center mb-8">
             <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Key size={32} />
             </div>
-            <h1 className="text-2xl font-bold font-display text-primary">
+            <h1 className="text-xl sm:text-2xl font-bold font-display text-primary">
               Configuración Inicial
             </h1>
             <p className="text-primary/70 mt-2">
@@ -867,7 +874,7 @@ export default function Admin() {
           </div>
 
           <form onSubmit={handleSetup} className="space-y-5">
-            <div className="flex gap-2 items-end">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
               <div className="flex-1">
                 <label className="block text-sm font-bold text-primary/80 mb-1">
                   Correo Electrónico
@@ -885,7 +892,7 @@ export default function Admin() {
                 type="button"
                 onClick={handleSendSetupCode}
                 disabled={loading || codeSent || !email}
-                className="px-4 py-3 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 h-[50px]"
+                className="px-4 py-3 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 h-[50px] w-full sm:w-auto"
               >
                 {codeSent ? "Enviado" : "Validar"}
               </button>
@@ -966,13 +973,13 @@ export default function Admin() {
 
   if (authState === "2FA") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6">
+        <div className="bg-white p-6 sm:p-10 rounded-2xl shadow-xl w-full max-w-md border border-primary/10">
           <div className="text-center mb-8">
             <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
               <Mail size={32} />
             </div>
-            <h1 className="text-2xl font-bold font-display text-primary">
+            <h1 className="text-xl sm:text-2xl font-bold font-display text-primary">
               Verificación de Identidad
             </h1>
             <p className="text-primary/70 mt-2">
@@ -1029,18 +1036,16 @@ export default function Admin() {
   // DASHBOARD VIEW
   return (
     <div className="min-h-screen bg-background flex font-sans">
-      {/* Sidebar - Sticky Left */}
-      <aside className="w-64 bg-white border-r border-primary/10 h-screen sticky top-0 flex flex-col z-30 shadow-lg flex-shrink-0">
+      <aside className="hidden md:flex w-64 bg-white border-r border-primary/10 h-screen sticky top-0 flex-col z-30 shadow-lg flex-shrink-0">
         <div className="p-6 border-b border-primary/10">
           <h1 className="text-xl font-bold font-display text-primary">
-            Panel Admin
+            Admin v.1.2.0
           </h1>
-          <p className="text-xs text-primary/60 mt-1">v1.1.0</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
-            onClick={() => setActiveTab("CONFIG")}
+            onClick={() => handleTabChange("CONFIG")}
             className={clsx(
               "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
               activeTab === "CONFIG"
@@ -1051,7 +1056,7 @@ export default function Admin() {
             <Settings size={20} /> Configuración
           </button>
           <button
-            onClick={() => setActiveTab("SUCCESS_CASES")}
+            onClick={() => handleTabChange("SUCCESS_CASES")}
             className={clsx(
               "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
               activeTab === "SUCCESS_CASES"
@@ -1062,7 +1067,7 @@ export default function Admin() {
             <ImageIcon size={20} /> Casos de Éxito
           </button>
           <button
-            onClick={() => setActiveTab("SERVICES")}
+            onClick={() => handleTabChange("SERVICES")}
             className={clsx(
               "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
               activeTab === "SERVICES"
@@ -1073,7 +1078,7 @@ export default function Admin() {
             <Layout size={20} /> Servicios
           </button>
           <button
-            onClick={() => setActiveTab("PROFILE")}
+            onClick={() => handleTabChange("PROFILE")}
             className={clsx(
               "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
               activeTab === "PROFILE"
@@ -1089,11 +1094,11 @@ export default function Admin() {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-primary/10 flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm">
-          <div className="font-display font-bold text-xl text-primary">
-            PodologíaConi
+        <header className="h-16 sm:h-20 bg-white border-b border-primary/10 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-20 shadow-sm">
+          <div className="font-display font-bold text-lg sm:text-xl text-primary">
+            Admin v.1.2.0
           </div>
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
             <a
               href="/"
               target="_blank"
@@ -1108,22 +1113,100 @@ export default function Admin() {
               <LogOut size={20} /> Cerrar Sesión
             </button>
           </div>
+          <div className="flex md:hidden items-center gap-2">
+            <a
+              href="/"
+              target="_blank"
+              className="p-2 rounded-lg text-primary/70 hover:text-secondary hover:bg-secondary/10 transition-colors"
+              aria-label="Ir al sitio web"
+            >
+              <Globe size={20} />
+            </a>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut size={20} />
+            </button>
+            <button
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              className="p-2 rounded-lg text-primary/80 hover:text-primary hover:bg-primary/5 transition-colors"
+              aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            >
+              {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </header>
 
+        <div
+          className={clsx(
+            "md:hidden border-b border-primary/10 bg-white px-4 pb-4",
+            isMobileMenuOpen ? "block" : "hidden",
+          )}
+        >
+          <nav className="pt-4 space-y-2">
+            <button
+              onClick={() => handleTabChange("CONFIG")}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                activeTab === "CONFIG"
+                  ? "bg-secondary text-primary shadow-md font-bold"
+                  : "text-primary/70 hover:bg-primary/5",
+              )}
+            >
+              <Settings size={20} /> Configuración
+            </button>
+            <button
+              onClick={() => handleTabChange("SUCCESS_CASES")}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                activeTab === "SUCCESS_CASES"
+                  ? "bg-secondary text-primary shadow-md font-bold"
+                  : "text-primary/70 hover:bg-primary/5",
+              )}
+            >
+              <ImageIcon size={20} /> Casos de Éxito
+            </button>
+            <button
+              onClick={() => handleTabChange("SERVICES")}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                activeTab === "SERVICES"
+                  ? "bg-secondary text-primary shadow-md font-bold"
+                  : "text-primary/70 hover:bg-primary/5",
+              )}
+            >
+              <Layout size={20} /> Servicios
+            </button>
+            <button
+              onClick={() => handleTabChange("PROFILE")}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all text-left font-medium",
+                activeTab === "PROFILE"
+                  ? "bg-secondary text-primary shadow-md font-bold"
+                  : "text-primary/70 hover:bg-primary/5",
+              )}
+            >
+              <Lock size={20} /> Perfil
+            </button>
+          </nav>
+        </div>
+
         {/* Main Content */}
-        <main className="flex-1 p-8 bg-background overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background overflow-y-auto">
           {/* SERVICES TAB */}
           {activeTab === "SERVICES" && (
             <div>
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-3xl font-bold font-display text-primary">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+                <h2 className="text-2xl sm:text-3xl font-bold font-display text-primary">
                   Gestión de Servicios
                 </h2>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
                   <button
                     onClick={toggleGlobalPrices}
                     className={clsx(
-                      "px-4 py-2.5 rounded-lg font-bold transition-colors flex items-center gap-2 border",
+                      "px-4 py-2.5 rounded-lg font-bold transition-colors flex items-center gap-2 border justify-center sm:justify-start",
                       siteConfig?.showPrices
                         ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
                         : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200",
@@ -1141,7 +1224,7 @@ export default function Admin() {
                   </button>
                   <button
                     onClick={() => openServiceModal()}
-                    className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+                    className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2 shadow-sm"
                   >
                     <Plus size={20} /> Nuevo Servicio
                   </button>
@@ -1263,13 +1346,13 @@ export default function Admin() {
           {/* SUCCESS CASES TAB */}
           {activeTab === "SUCCESS_CASES" && (
             <div>
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-3xl font-bold font-display text-primary">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <h2 className="text-2xl sm:text-3xl font-bold font-display text-primary">
                   Casos de Éxito
                 </h2>
                 <button
                   onClick={() => openCaseModal()}
-                  className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+                  className="px-5 py-2.5 bg-secondary text-primary font-bold rounded-lg hover:bg-opacity-90 transition-colors flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto"
                 >
                   <Plus size={20} /> Nuevo Caso
                 </button>
@@ -1352,7 +1435,7 @@ export default function Admin() {
           {/* CONFIG TAB */}
           {activeTab === "CONFIG" && (
             <div className="max-w-4xl">
-              <h2 className="text-3xl font-bold font-display text-primary mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold font-display text-primary mb-8">
                 Configuración General
               </h2>
 
@@ -1549,7 +1632,7 @@ export default function Admin() {
           {/* PROFILE TAB */}
           {activeTab === "PROFILE" && (
             <div className="max-w-4xl">
-              <h2 className="text-3xl font-bold font-display text-primary mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold font-display text-primary mb-8">
                 Mi Perfil
               </h2>
 
