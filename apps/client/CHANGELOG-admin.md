@@ -3,3 +3,5 @@
 - Refuerza validaciones de entradas en endpoints administrativos.
 - Restringe operaciones sensibles a sesiones con scope completo.
 - Limita carga de imágenes y aplica rate limiting en endpoints críticos.
+## [0.2.0] - 2026-01-29
+- Endurece cabeceras de seguridad a nivel de plataforma.
