@@ -314,12 +314,14 @@ export default function Home() {
               </h3>
               <div
                 className="text-primary/70 text-sm sm:text-base leading-relaxed
-             prose prose-sm prose-primary
-             max-w-full overflow-x-hidden
+             prose prose-sm prose-primary max-w-full
              prose-p:my-2 prose-ul:my-2 prose-ol:my-2
-             break-normal whitespace-normal
-             [overflow-wrap:anywhere]"
-                dangerouslySetInnerHTML={{ __html: selectedCase.description }}
+             break-normal whitespace-normal hyphens-none"
+                dangerouslySetInnerHTML={{
+                  __html: selectedCase.description
+                    .replace(/\s*\n\s*/g, " ")
+                    .replace(/\s{2,}/g, " "),
+                }}
               />
             </div>
           </div>
