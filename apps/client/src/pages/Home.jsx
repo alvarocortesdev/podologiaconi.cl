@@ -48,10 +48,10 @@ export default function Home() {
   const [sanitizedDescription, setSanitizedDescription] = React.useState("");
   const heroImage =
     config?.aboutImage || "https://placehold.co/400x400?text=Avatar";
-  const heroSrc = buildCloudinaryUrl(heroImage, { width: 640 });
+  const heroSrc = buildCloudinaryUrl(heroImage, { width: 480 });
   const heroSrcSet = buildCloudinarySrcSet(
     heroImage,
-    [256, 320, 480, 640, 960],
+    [224, 320, 480, 640, 960],
   );
 
   React.useEffect(() => {
@@ -139,7 +139,7 @@ export default function Home() {
 
             {/* Image */}
             <div className="relative mt-12 sm:mt-16 lg:mt-0 flex justify-center">
-              <div className="w-64 h-64 sm:w-80 sm:h-80 lg:w-[480px] lg:h-[480px] bg-primary/10 rounded-full p-3 sm:p-4">
+              <div className="w-56 h-56 sm:w-80 sm:h-80 lg:w-[480px] lg:h-[480px] bg-primary/10 rounded-full p-3 sm:p-4">
                 <div className="w-full h-full rounded-full overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
                   <img
                     src={heroSrc}
@@ -151,7 +151,7 @@ export default function Home() {
                     decoding="async"
                     width="480"
                     height="480"
-                    sizes="(min-width: 1024px) 480px, (min-width: 640px) 320px, 256px"
+                    sizes="(min-width: 1024px) 480px, (min-width: 640px) 320px, 224px"
                   />
                 </div>
               </div>
@@ -178,6 +178,7 @@ export default function Home() {
           introStep >= 3 ? "opacity-100" : "opacity-0",
           "transition-opacity duration-1000",
         )}
+        style={{ contentVisibility: "auto", containIntrinsicSize: "1px 800px" }}
       >
         <h2 className="sr-only">Características</h2>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -226,6 +227,7 @@ export default function Home() {
           introStep >= 4 ? "opacity-100" : "opacity-0",
           "transition-opacity duration-1000",
         )}
+        style={{ contentVisibility: "auto", containIntrinsicSize: "1px 900px" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-16">
@@ -269,6 +271,7 @@ export default function Home() {
           introStep >= 5 ? "opacity-100" : "opacity-0",
           "transition-opacity duration-1000",
         )}
+        style={{ contentVisibility: "auto", containIntrinsicSize: "1px 900px" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-16">
