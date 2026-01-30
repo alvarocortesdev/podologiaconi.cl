@@ -259,6 +259,7 @@ export default function Services() {
         </div>
 
         {/* Services Grid */}
+        <h2 className="sr-only">Servicios disponibles</h2>
         {loading || configLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
             {[...Array(6)].map((_, index) => (
@@ -327,6 +328,7 @@ export default function Services() {
                   onClick={() => setSelectedServices([])}
                   className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
                   title="Limpiar todo"
+                  aria-label="Limpiar servicios seleccionados"
                 >
                   <X size={20} />
                 </button>
@@ -334,7 +336,7 @@ export default function Services() {
                   <ShoppingBag size={24} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-300 font-medium">
+                  <p className="text-sm text-white/90 font-medium">
                     {selectedServices.length} servicio(s) seleccionados
                   </p>
                   {total !== null && (
@@ -366,6 +368,7 @@ export default function Services() {
                     setFormData({ name: "", email: "", phone: "" });
                   }}
                   className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Cerrar formulario de cotización"
                 >
                   <X size={24} />
                 </button>

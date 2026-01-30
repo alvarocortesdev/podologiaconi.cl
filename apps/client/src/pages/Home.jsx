@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 import { IntroContext } from "../context/IntroContext";
 import { useConfig } from "../context/configContextBase";
 import clsx from "clsx";
-import DOMPurify from "dompurify";
 import { buildCloudinarySrcSet, buildCloudinaryUrl } from "../utils/cloudinary";
 
 export default function Home() {
@@ -46,6 +45,7 @@ export default function Home() {
     aboutCards && aboutCards.length > 0 ? aboutCards : defaultAboutCards;
 
   const [selectedCase, setSelectedCase] = React.useState(null);
+  const [sanitizedDescription, setSanitizedDescription] = React.useState("");
   const heroImage =
     config?.aboutImage || "https://placehold.co/400x400?text=Avatar";
   const heroSrc = buildCloudinaryUrl(heroImage, { width: 640 });
@@ -53,6 +53,41 @@ export default function Home() {
     heroImage,
     [256, 320, 480, 640, 960],
   );
+
+  React.useEffect(() => {
+    if (!selectedCase) {
+      setSanitizedDescription("");
+      return;
+    }
+    const normalizedDescription = (selectedCase.description || "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/\u00a0/g, " ")
+      .replace(/&shy;/g, "")
+      .replace(/\u00ad/g, "");
+    let cancelled = false;
+    (async () => {
+      const { default: DOMPurify } = await import("dompurify");
+      const sanitized = DOMPurify.sanitize(normalizedDescription, {
+        ALLOWED_TAGS: [
+          "p",
+          "ul",
+          "ol",
+          "li",
+          "strong",
+          "em",
+          "b",
+          "i",
+          "br",
+          "a",
+        ],
+        ALLOWED_ATTR: ["href", "target", "rel"],
+      });
+      if (!cancelled) setSanitizedDescription(sanitized);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCase]);
 
   return (
     <div className="pb-16 sm:pb-24">
@@ -77,11 +112,11 @@ export default function Home() {
                 {config?.heroTitle || (
                   <>
                     Bienestar y Salud <br />
-                    <span className="text-secondary">para tus Pies</span>
+                    <span className="text-primary">para tus Pies</span>
                   </>
                 )}
               </h1>
-              <p className="text-base sm:text-lg text-primary/70 mb-6 sm:mb-10 max-w-xl mx-auto lg:mx-0 px-2 sm:px-0 whitespace-pre-line">
+              <p className="text-base sm:text-lg text-primary/80 mb-6 sm:mb-10 max-w-xl mx-auto lg:mx-0 px-2 sm:px-0 whitespace-pre-line">
                 {config?.heroSubtitle ||
                   "Soy Coni, Podóloga Clínica certificada dedicada a brindar una atención integral y personalizada. Mi objetivo es diagnosticar y tratar las afecciones de tus pies, combinando las mejores técnicas clínicas con un cuidado estético superior."}
               </p>
@@ -124,7 +159,7 @@ export default function Home() {
                 <p className="font-bold text-primary text-base sm:text-lg">
                   Coni
                 </p>
-                <p className="text-xs sm:text-sm text-primary/60">
+                <p className="text-xs sm:text-sm text-primary/80">
                   Podóloga Clínica
                 </p>
               </div>
@@ -144,6 +179,7 @@ export default function Home() {
           "transition-opacity duration-1000",
         )}
       >
+        <h2 className="sr-only">Características</h2>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {[
@@ -173,7 +209,7 @@ export default function Home() {
                 <h3 className="text-lg sm:text-xl font-bold text-primary mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-sm sm:text-base text-primary/70">
+                <p className="text-sm sm:text-base text-primary/80">
                   {feature.desc}
                 </p>
               </div>
@@ -277,29 +313,6 @@ export default function Home() {
       {/* Success Case Modal */}
       {selectedCase &&
         (() => {
-          const normalizedDescription = (selectedCase.description || "")
-            .replace(/&nbsp;/g, " ")
-            .replace(/\u00a0/g, " ")
-            .replace(/&shy;/g, "")
-            .replace(/\u00ad/g, "");
-          const sanitizedDescription = DOMPurify.sanitize(
-            normalizedDescription,
-            {
-              ALLOWED_TAGS: [
-                "p",
-                "ul",
-                "ol",
-                "li",
-                "strong",
-                "em",
-                "b",
-                "i",
-                "br",
-                "a",
-              ],
-              ALLOWED_ATTR: ["href", "target", "rel"],
-            },
-          );
           const titleId = `case-title-${selectedCase.id || "selected"}`;
 
           return (

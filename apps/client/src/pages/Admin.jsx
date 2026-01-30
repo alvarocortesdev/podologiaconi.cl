@@ -1341,6 +1341,11 @@ export default function Admin() {
                                         ? "Ocultar Servicio"
                                         : "Mostrar Servicio"
                                     }
+                                    aria-label={
+                                      service.isVisible
+                                        ? "Ocultar servicio"
+                                        : "Mostrar servicio"
+                                    }
                                   >
                                     {service.isVisible ? (
                                       <Eye size={18} />
@@ -1351,6 +1356,7 @@ export default function Admin() {
                                   <button
                                     onClick={() => openServiceModal(service)}
                                     className="p-2 text-primary/70 hover:bg-secondary/20 hover:text-primary rounded-lg"
+                                    aria-label="Editar servicio"
                                   >
                                     <Pencil size={18} />
                                   </button>
@@ -1359,6 +1365,7 @@ export default function Admin() {
                                       handleDeleteService(service.id)
                                     }
                                     className="p-2 text-primary/70 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                                    aria-label="Eliminar servicio"
                                   >
                                     <Trash2 size={18} />
                                   </button>
@@ -1833,6 +1840,7 @@ export default function Admin() {
               <button
                 onClick={() => setIsServiceModalOpen(false)}
                 className="text-white/80 hover:text-white"
+                aria-label="Cerrar modal de servicio"
               >
                 <X size={24} />
               </button>
@@ -1945,6 +1953,7 @@ export default function Admin() {
               <button
                 onClick={() => setIsCaseModalOpen(false)}
                 className="text-white/80 hover:text-white"
+                aria-label="Cerrar modal de caso"
               >
                 <X size={24} />
               </button>
@@ -2038,6 +2047,7 @@ export default function Admin() {
                     type="button"
                     onClick={() => setIsCaseModalOpen(false)}
                     className="p-2 text-primary/70 hover:bg-gray-100 rounded-lg"
+                  aria-label="Cerrar modal de caso"
                   >
                     <X size={20} />
                   </button>
@@ -2045,6 +2055,7 @@ export default function Admin() {
                     type="submit"
                     disabled={loading}
                     className="p-2 bg-secondary text-primary rounded-lg hover:bg-opacity-90"
+                  aria-label={loading ? "Guardando caso" : "Guardar caso"}
                   >
                     {loading ? (
                       <Loader2 className="animate-spin" size={18} />
@@ -2070,6 +2081,7 @@ export default function Admin() {
               <button
                 onClick={() => setIsCardModalOpen(false)}
                 className="text-white/80 hover:text-white"
+                aria-label="Cerrar modal de tarjeta"
               >
                 <X size={24} />
               </button>
