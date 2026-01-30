@@ -8,10 +8,20 @@ export function ConfigProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const safeJson = async (res, fallback) => {
+      if (!res.ok) return fallback;
+      const type = res.headers.get("content-type") || "";
+      if (!type.includes("application/json")) return fallback;
+      try {
+        return await res.json();
+      } catch {
+        return fallback;
+      }
+    };
     Promise.all([
-      fetch("/api/config").then((res) => (res.ok ? res.json() : null)),
-      fetch("/api/success-cases").then((res) => (res.ok ? res.json() : [])),
-      fetch("/api/about-cards").then((res) => (res.ok ? res.json() : [])),
+      fetch("/api/config").then((res) => safeJson(res, null)),
+      fetch("/api/success-cases").then((res) => safeJson(res, [])),
+      fetch("/api/about-cards").then((res) => safeJson(res, [])),
     ])
       .then(([configData, casesData, cardsData]) => {
         setConfig(configData);
@@ -19,8 +29,7 @@ export function ConfigProvider({ children }) {
         setAboutCards(cardsData);
         setLoading(false);
       })
-      .catch((err) => {
-        console.error("Error loading config:", err);
+      .catch(() => {
         setLoading(false);
       });
   }, []);

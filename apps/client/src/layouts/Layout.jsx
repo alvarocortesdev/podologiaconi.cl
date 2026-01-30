@@ -135,7 +135,7 @@ export default function Layout({ children }) {
                   to="/"
                   className="text-3xl font-display font-bold tracking-tight text-primary"
                 >
-                  Podología<span className="text-secondary">Coni</span>
+                  Podología<span className="text-primary">Coni</span>
                 </Link>
               </div>
 
@@ -151,7 +151,7 @@ export default function Layout({ children }) {
                     className={clsx(
                       "text-base font-medium transition-colors duration-300 relative group",
                       location.pathname === link.path
-                        ? "text-secondary font-semibold"
+                        ? "text-primary font-semibold"
                         : "text-primary/70 hover:text-primary",
                     )}
                   >
@@ -176,6 +176,7 @@ export default function Layout({ children }) {
                 <button
                   onClick={() => setIsOpen(!isOpen)}
                   className="text-primary hover:text-secondary focus:outline-none"
+                  aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
                 >
                   {isOpen ? <X size={28} /> : <Menu size={28} />}
                 </button>
@@ -226,7 +227,7 @@ export default function Layout({ children }) {
               {/* About */}
               <div className="md:col-span-5 lg:col-span-6">
                 <h3 className="text-2xl font-display font-bold mb-4">
-                  Podología<span className="text-secondary">Coni</span>
+                  Podología<span className="text-white">Coni</span>
                 </h3>
                 <p className="text-gray-300 text-sm max-w-md">
                   Cuidado profesional para la salud y belleza de tus pies.
