@@ -48,3 +48,9 @@
 
 - Ajusta contrastes y headings para mejorar accesibilidad.
 - Carga DOMPurify bajo demanda para reducir JS inicial.
+## [0.11.0] - 2026-01-29
+
+- Difere carga de Google Fonts para mejorar FCP/LCP en mobile.
+## [0.12.0] - 2026-01-29
+
+- Ajusta tamaño hero en mobile y difiere render de secciones no críticas.

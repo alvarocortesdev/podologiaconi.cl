@@ -39,7 +39,12 @@ export default function Layout({ children }) {
 
   const [introStep, setIntroStep] = React.useState(() => {
     if (typeof window !== "undefined") {
-      if (window.location.pathname !== "/") {
+      const isHomePath = window.location.pathname === "/";
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      if (!isHomePath || prefersReducedMotion || isMobile) {
         return 6;
       }
     }
@@ -48,9 +53,16 @@ export default function Layout({ children }) {
 
   React.useEffect(() => {
     const isHome = location.pathname === "/";
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 768px)").matches;
+    const shouldAnimate = !prefersReducedMotion && !isMobile;
 
     // Only run animation if we started at step 0 (meaning we are on Home and it's a fresh load)
-    if (introStep === 0 && isHome) {
+    if (introStep === 0 && isHome && shouldAnimate) {
       setIntroStep(1);
 
       const timers = [
@@ -62,7 +74,7 @@ export default function Layout({ children }) {
       ];
 
       return () => timers.forEach(clearTimeout);
-    } else if (!isHome) {
+    } else if (!isHome || !shouldAnimate) {
       // If not home, ensure we are done
       setIntroStep(6);
     }
