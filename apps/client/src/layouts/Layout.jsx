@@ -12,6 +12,8 @@ import {
   MessageSquare,
 } from "lucide-react";
 import clsx from "clsx";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { IntroContext } from "../context/IntroContext";
 import { useConfig } from "../context/configContextBase";
@@ -130,6 +132,7 @@ export default function Layout({ children }) {
   };
   return (
     <IntroContext.Provider value={{ introStep }}>
+      <ToastContainer position="bottom-center" autoClose={2000} />
       <div className="min-h-screen flex flex-col bg-background font-sans text-primary">
         {/* Navbar */}
         <nav
@@ -324,7 +327,7 @@ export default function Layout({ children }) {
             </div>
             <div className="mt-12 pt-6 border-t border-white/20 text-center text-sm text-gray-400">
               <p>
-                © {new Date().getFullYear()} Podología Coni. Todos los derechos
+                {new Date().getFullYear()} Podología Coni. Todos los derechos
                 reservados.
               </p>
 
@@ -333,7 +336,7 @@ export default function Layout({ children }) {
 
               {/* Developer credits */}
               <div className="flex flex-col items-center gap-3">
-                <p>Sitio desarrollado por Alvaro Pelusa™ Cortés</p>
+                <p>Sitio desarrollado por Alvaro Pelusa Cortés</p>
 
                 <div className="flex gap-6">
                   <a
@@ -356,13 +359,16 @@ export default function Layout({ children }) {
                     <Linkedin size={18} />
                   </a>
 
-                  <a
-                    href="mailto:alvaro.cortes.dev@outlook.com"
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("alvaro.cortes.dev@outlook.com");
+                      toast.success("Correo copiado");
+                    }}
                     aria-label="Correo"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-white transition-colors cursor-pointer"
                   >
                     <Mail size={18} />
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
